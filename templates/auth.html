@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Đăng nhập hoặc đăng ký để chơi Ai Là Triệu Phú">
+    <meta name="theme-color" content="#1a0a3e">
+    <title>🎯 Ai Là Triệu Phú — Đăng nhập</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        :root {
+            --primary: #1a0a3e;
+            --gold: #ffd700;
+            --gold-dark: #b8860b;
+            --accent: #e94560;
+            --bg-gradient: linear-gradient(135deg, #0a0025 0%, #1a0a3e 25%, #0f3460 50%, #16213e 75%, #0a0025 100%);
+            --text: #ffffff;
+            --text-dim: #8892b0;
+            --glow-gold: 0 0 20px rgba(255,215,0,0.5);
+            --radius: 12px;
+            --radius-lg: 20px;
+            --radius-full: 50px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-gradient);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Hạt nền bay */
+        .particles {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+        .particle {
+            position: absolute;
+            width: 3px; height: 3px;
+            background: var(--gold);
+            border-radius: 50%;
+            animation: float 6s infinite ease-in-out;
+            opacity: 0.25;
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); opacity: 0.25; }
+            50% { transform: translateY(-80px) rotate(180deg); opacity: 0.7; }
+        }
+
+        /* Card chính */
+        .auth-card {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 480px;
+            padding: 20px;
+        }
+
+        /* Logo */
+        .logo {
+            text-align: center;
+            margin-bottom: 35px;
+        }
+        .logo-glow {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 300px; height: 300px;
+            background: radial-gradient(circle, rgba(255,215,0,0.12) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: pulse 3s ease-in-out infinite;
+            pointer-events: none;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.5; }
+            50% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+        }
+        .logo-icon {
+            font-size: 3rem;
+            margin-bottom: 12px;
+            display: block;
+            animation: bounce 2s ease-in-out infinite;
+        }
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+        .logo h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.6rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, #ffd700, #ffaa00, #ffd700);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            filter: drop-shadow(0 0 20px rgba(255,215,0,0.4));
+        }
+        .logo p {
+            font-size: 0.85rem;
+            color: var(--text-dim);
+            margin-top: 6px;
+            letter-spacing: 2px;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            background: rgba(255,255,255,0.04);
+            border-radius: var(--radius-lg);
+            padding: 5px;
+            margin-bottom: 28px;
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+        .tab-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            background: transparent;
+            color: var(--text-dim);
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            border-radius: calc(var(--radius-lg) - 3px);
+            transition: all 0.3s ease;
+            font-family: 'Inter', sans-serif;
+        }
+        .tab-btn.active {
+            background: linear-gradient(135deg, rgba(255,215,0,0.2), rgba(255,170,0,0.1));
+            color: var(--gold);
+            box-shadow: 0 0 15px rgba(255,215,0,0.15);
+        }
+
+        /* Form */
+        .form-container {
+            background: linear-gradient(135deg, rgba(26,10,62,0.95), rgba(15,52,96,0.9));
+            border: 1px solid rgba(255,215,0,0.2);
+            border-radius: var(--radius-lg);
+            padding: 35px 30px;
+            backdrop-filter: blur(20px);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        }
+
+        .form-panel { display: none; }
+        .form-panel.active { display: block; animation: slideIn 0.3s ease; }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .form-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--gold);
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+        .form-group label {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-dim);
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        .input-wrapper {
+            position: relative;
+        }
+        .input-wrapper i {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-dim);
+            font-size: 0.95rem;
+            transition: color 0.3s;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 14px 16px 14px 44px;
+            border: 1.5px solid rgba(255,255,255,0.12);
+            border-radius: var(--radius);
+            background: rgba(255,255,255,0.05);
+            color: var(--text);
+            font-size: 1rem;
+            outline: none;
+            transition: all 0.3s ease;
+            font-family: 'Inter', sans-serif;
+        }
+        .form-group input:focus {
+            border-color: var(--gold);
+            box-shadow: var(--glow-gold);
+            background: rgba(255,215,0,0.04);
+        }
+        .form-group input:focus + i,
+        .input-wrapper:focus-within i {
+            color: var(--gold);
+        }
+        .form-group input::placeholder { color: rgba(255,255,255,0.25); }
+
+        /* Strength bar cho password */
+        .strength-bar {
+            display: none;
+            margin-top: 8px;
+            height: 4px;
+            border-radius: 2px;
+            background: rgba(255,255,255,0.1);
+            overflow: hidden;
+        }
+        .strength-fill {
+            height: 100%;
+            border-radius: 2px;
+            transition: width 0.3s, background 0.3s;
+        }
+        .strength-text {
+            font-size: 0.75rem;
+            margin-top: 4px;
+            color: var(--text-dim);
+        }
+
+        /* Submit button */
+        .btn-submit {
+            width: 100%;
+            padding: 16px;
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: #000;
+            background: linear-gradient(135deg, var(--gold), #ffaa00);
+            border: none;
+            border-radius: var(--radius-full);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-top: 8px;
+            position: relative;
+            overflow: hidden;
+            font-family: 'Inter', sans-serif;
+        }
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(255,215,0,0.4);
+        }
+        .btn-submit:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .btn-submit::after {
+            content: '';
+            position: absolute;
+            top: -50%; left: -50%;
+            width: 200%; height: 200%;
+            background: linear-gradient(transparent, rgba(255,255,255,0.2), transparent);
+            transform: rotate(45deg);
+            animation: shine 3s ease-in-out infinite;
+        }
+        @keyframes shine {
+            0% { transform: translateX(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) rotate(45deg); }
+        }
+
+        /* Alert */
+        .alert {
+            display: none;
+            padding: 13px 16px;
+            border-radius: var(--radius);
+            font-size: 0.9rem;
+            margin-bottom: 18px;
+            align-items: center;
+            gap: 10px;
+            animation: slideIn 0.3s ease;
+        }
+        .alert.show { display: flex; }
+        .alert.error {
+            background: rgba(233,69,96,0.15);
+            border: 1px solid rgba(233,69,96,0.4);
+            color: #ff8a9b;
+        }
+        .alert.success {
+            background: rgba(0,200,83,0.12);
+            border: 1px solid rgba(0,200,83,0.3);
+            color: #69f0ae;
+        }
+
+        /* Divider */
+        .divider {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 20px 0;
+            color: var(--text-dim);
+            font-size: 0.8rem;
+        }
+        .divider::before, .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: rgba(255,255,255,0.1);
+        }
+
+        /* Demo hint */
+        .demo-hint {
+            text-align: center;
+            font-size: 0.8rem;
+            color: var(--text-dim);
+            margin-top: 16px;
+        }
+        .demo-hint span {
+            color: var(--gold);
+            cursor: pointer;
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="particles" id="particles"></div>
+
+    <div class="auth-card">
+        <!-- Logo -->
+        <div class="logo" style="position:relative;">
+            <div class="logo-glow"></div>
+            <span class="logo-icon">🎯</span>
+            <h1>AI LÀ TRIỆU PHÚ</h1>
+            <p>💎 Who Wants To Be A Millionaire 💎</p>
+        </div>
+
+        <!-- Tabs đăng nhập / đăng ký -->
+        <div class="tabs">
+            <button class="tab-btn active" id="tab-login" onclick="switchTab('login')">
+                <i class="fas fa-sign-in-alt"></i> Đăng nhập
+            </button>
+            <button class="tab-btn" id="tab-register" onclick="switchTab('register')">
+                <i class="fas fa-user-plus"></i> Đăng ký
+            </button>
+        </div>
+
+        <!-- Form container -->
+        <div class="form-container">
+
+            <!-- Form đăng nhập -->
+            <div class="form-panel active" id="panel-login">
+                <div class="form-title"><i class="fas fa-sign-in-alt"></i> Chào mừng trở lại!</div>
+
+                <div class="alert" id="login-alert"></div>
+
+                <form id="login-form" onsubmit="handleLogin(event)">
+                    <div class="form-group">
+                        <label for="login-username">Tên đăng nhập</label>
+                        <div class="input-wrapper">
+                            <input type="text" id="login-username" placeholder="Nhập tên đăng nhập..." autocomplete="username" required>
+                            <i class="fas fa-user"></i>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="login-password">Mật khẩu</label>
+                        <div class="input-wrapper">
+                            <input type="password" id="login-password" placeholder="Nhập mật khẩu..." autocomplete="current-password" required>
+                            <i class="fas fa-lock"></i>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-submit" id="login-btn">
+                        <i class="fas fa-play"></i> VÀO CHƠI NGAY
+                    </button>
+                </form>
+
+                <div class="demo-hint" style="margin-top: 10px; display: flex; justify-content: space-between; padding: 0 5px;">
+                    <span onclick="switchTab('forgot')">Quên mật khẩu?</span>
+                    <span onclick="switchTab('register')">Đăng ký ngay</span>
+                </div>
+            </div>
+
+            <!-- Form đăng ký -->
+            <div class="form-panel" id="panel-register">
+                <div class="form-title"><i class="fas fa-user-plus"></i> Tạo tài khoản mới</div>
+
+                <div class="alert" id="register-alert"></div>
+
+                <form id="register-form" onsubmit="handleRegister(event)">
+                    <div class="form-group">
+                        <label for="reg-username">Tên đăng nhập</label>
+                        <div class="input-wrapper">
+                            <input type="text" id="reg-username" placeholder="Ít nhất 3 ký tự..." autocomplete="username" required minlength="3">
+                            <i class="fas fa-user"></i>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="reg-email">Email</label>
+                        <div class="input-wrapper">
+                            <input type="email" id="reg-email" placeholder="Địa chỉ email để khôi phục..." autocomplete="email" required>
+                            <i class="fas fa-envelope"></i>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="reg-display">Tên hiển thị trong game</label>
+                        <div class="input-wrapper">
+                            <input type="text" id="reg-display" placeholder="Tên người chơi..." autocomplete="nickname" required>
+                            <i class="fas fa-id-badge"></i>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="reg-password">Mật khẩu</label>
+                        <div class="input-wrapper">
+                            <input type="password" id="reg-password" placeholder="Ít nhất 6 ký tự..." autocomplete="new-password" required minlength="6" oninput="checkStrength(this.value)">
+                            <i class="fas fa-lock"></i>
+                        </div>
+                        <div class="strength-bar" id="strength-bar">
+                            <div class="strength-fill" id="strength-fill"></div>
+                        </div>
+                        <div class="strength-text" id="strength-text"></div>
+                    </div>
+                    <div class="form-group">
+                        <label for="reg-confirm">Xác nhận mật khẩu</label>
+                        <div class="input-wrapper">
+                            <input type="password" id="reg-confirm" placeholder="Nhập lại mật khẩu..." autocomplete="new-password" required>
+                            <i class="fas fa-lock"></i>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-submit" id="register-btn">
+                        <i class="fas fa-rocket"></i> TẠO TÀI KHOẢN
+                    </button>
+                </form>
+
+                <div class="demo-hint">
+                    Đã có tài khoản? <span onclick="switchTab('login')">Đăng nhập</span>
+                </div>
+            </div>
+
+            <!-- Form quên mật khẩu -->
+            <div class="form-panel" id="panel-forgot">
+                <div class="form-title"><i class="fas fa-key"></i> Khôi phục mật khẩu</div>
+                
+                <div class="alert" id="forgot-alert"></div>
+
+                <!-- Bước 1: Nhập email để lấy mã -->
+                <form id="forgot-step1" onsubmit="handleRequestCode(event)">
+                    <p style="font-size: 0.8rem; color: var(--text-dim); margin-bottom: 20px;">Nhập Email của bạn. Chúng tôi sẽ gửi mã xác nhận 6 số.</p>
+                    <div class="form-group">
+                        <label for="forgot-email">Email đã đăng ký</label>
+                        <div class="input-wrapper">
+                            <input type="email" id="forgot-email" placeholder="Nhập email..." required>
+                            <i class="fas fa-envelope"></i>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-submit" id="forgot-btn1">
+                        <i class="fas fa-paper-plane"></i> GỬI MÃ XÁC NHẬN
+                    </button>
+                </form>
+
+                <!-- Bước 2: Nhập mã và mật khẩu mới (Ẩn mặc định) -->
+                <form id="forgot-step2" onsubmit="handleVerifyAndReset(event)" style="display:none;">
+                    <p style="font-size: 0.8rem; color: var(--gold); margin-bottom: 20px;">Mã đã được gửi! Vui lòng kiểm tra email của bạn.</p>
+                    <div class="form-group">
+                        <label for="forgot-code">Mã xác nhận (6 số)</label>
+                        <div class="input-wrapper">
+                            <input type="text" id="forgot-code" placeholder="123456" required maxlength="6" pattern="\d{6}">
+                            <i class="fas fa-shield-alt"></i>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="forgot-new-pw">Mật khẩu mới</label>
+                        <div class="input-wrapper">
+                            <input type="password" id="forgot-new-pw" placeholder="Ít nhất 6 ký tự..." required minlength="6">
+                            <i class="fas fa-lock"></i>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-submit" id="forgot-btn2">
+                        <i class="fas fa-check-circle"></i> ĐỔI MẬT KHẨU
+                    </button>
+                </form>
+
+                <div class="demo-hint" style="margin-top: 20px;">
+                    Quay lại <span onclick="switchTab('login')">Đăng nhập</span>
+                </div>
+            </div>
+
+
+        </div>
+    </div>
+
+    <script>
+        // Tạo hạt nền
+        const container = document.getElementById('particles');
+        for (let i = 0; i < 25; i++) {
+            const p = document.createElement('div');
+            p.className = 'particle';
+            p.style.left = Math.random() * 100 + '%';
+            p.style.top = Math.random() * 100 + '%';
+            p.style.animationDelay = Math.random() * 6 + 's';
+            p.style.animationDuration = (4 + Math.random() * 4) + 's';
+            container.appendChild(p);
+        }
+
+        // Chuyển tab
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.form-panel').forEach(p => p.classList.remove('active'));
+            if (tab !== 'forgot') {
+                document.getElementById('tab-' + tab).classList.add('active');
+            }
+            document.getElementById('panel-' + tab).classList.add('active');
+            
+            // Xoá thông báo cũ
+            hideAlert('login-alert');
+            hideAlert('register-alert');
+            hideAlert('forgot-alert');
+            
+            // Reset form quên mật khẩu về bước 1
+            if (tab === 'forgot') {
+                document.getElementById('forgot-step1').style.display = 'block';
+                document.getElementById('forgot-step2').style.display = 'none';
+            }
+        }
+
+        // Hiện / ẩn alert
+        function showAlert(id, type, msg) {
+            const el = document.getElementById(id);
+            el.className = 'alert show ' + type;
+            el.innerHTML = `<i class="fas fa-${type === 'error' ? 'exclamation-circle' : 'check-circle'}"></i> ${msg}`;
+        }
+        function hideAlert(id) {
+            document.getElementById(id).className = 'alert';
+        }
+
+        // Đánh giá độ mạnh mật khẩu
+        function checkStrength(pw) {
+            const bar = document.getElementById('strength-bar');
+            const fill = document.getElementById('strength-fill');
+            const text = document.getElementById('strength-text');
+            bar.style.display = 'block';
+
+            let score = 0;
+            if (pw.length >= 6) score++;
+            if (pw.length >= 10) score++;
+            if (/[A-Z]/.test(pw)) score++;
+            if (/[0-9]/.test(pw)) score++;
+            if (/[^A-Za-z0-9]/.test(pw)) score++;
+
+            const levels = [
+                { width: '20%', color: '#ff1744', label: 'Rất yếu' },
+                { width: '40%', color: '#ff9800', label: 'Yếu' },
+                { width: '60%', color: '#ffd700', label: 'Trung bình' },
+                { width: '80%', color: '#69f0ae', label: 'Mạnh' },
+                { width: '100%', color: '#00c853', label: 'Rất mạnh 💪' },
+            ];
+            const lvl = levels[Math.min(score, 4)];
+            fill.style.width = lvl.width;
+            fill.style.background = lvl.color;
+            text.textContent = lvl.label;
+            text.style.color = lvl.color;
+        }
+
+        // Đăng nhập
+        async function handleLogin(e) {
+            e.preventDefault();
+            const btn = document.getElementById('login-btn');
+            const username = document.getElementById('login-username').value.trim();
+            const password = document.getElementById('login-password').value;
+
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang xử lý...';
+            hideAlert('login-alert');
+
+            try {
+                const res = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showAlert('login-alert', 'success', 'Đăng nhập thành công! Đang vào game...');
+                    setTimeout(() => window.location.href = '/', 800);
+                } else {
+                    showAlert('login-alert', 'error', data.error || 'Đăng nhập thất bại!');
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-play"></i> VÀO CHƠI NGAY';
+                }
+            } catch (err) {
+                showAlert('login-alert', 'error', 'Lỗi kết nối server!');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-play"></i> VÀO CHƠI NGAY';
+            }
+        }
+
+        // Đăng ký
+        async function handleRegister(e) {
+            e.preventDefault();
+            const btn = document.getElementById('register-btn');
+            const username = document.getElementById('reg-username').value.trim();
+            const email = document.getElementById('reg-email').value.trim();
+            const display_name = document.getElementById('reg-display').value.trim();
+            const password = document.getElementById('reg-password').value;
+            const confirm = document.getElementById('reg-confirm').value;
+
+            if (password !== confirm) {
+                showAlert('register-alert', 'error', 'Mật khẩu xác nhận không khớp!');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang tạo tài khoản...';
+            hideAlert('register-alert');
+
+            try {
+                const res = await fetch('/api/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, email, display_name, password })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showAlert('register-alert', 'success', 'Tạo tài khoản thành công! Đang vào game...');
+                    setTimeout(() => window.location.href = '/', 800);
+                } else {
+                    showAlert('register-alert', 'error', data.error || 'Đăng ký thất bại!');
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-rocket"></i> TẠO TÀI KHOẢN';
+                }
+            } catch (err) {
+                showAlert('register-alert', 'error', 'Lỗi kết nối server!');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-rocket"></i> TẠO TÀI KHOẢN';
+            }
+        }
+
+        // Quên mật khẩu - Bước 1: Yêu cầu mã
+        async function handleRequestCode(e) {
+            e.preventDefault();
+            const btn = document.getElementById('forgot-btn1');
+            const email = document.getElementById('forgot-email').value.trim();
+
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang gửi mã...';
+            hideAlert('forgot-alert');
+
+            try {
+                const res = await fetch('/api/auth/forgot-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showAlert('forgot-alert', 'success', data.message);
+                    document.getElementById('forgot-step1').style.display = 'none';
+                    document.getElementById('forgot-step2').style.display = 'block';
+                } else {
+                    showAlert('forgot-alert', 'error', data.error || 'Lỗi gửi mã!');
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-paper-plane"></i> GỬI MÃ XÁC NHẬN';
+                }
+            } catch (err) {
+                showAlert('forgot-alert', 'error', 'Lỗi kết nối server!');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-paper-plane"></i> GỬI MÃ XÁC NHẬN';
+            }
+        }
+
+        // Quên mật khẩu - Bước 2: Xác nhận và đổi pass
+        async function handleVerifyAndReset(e) {
+            e.preventDefault();
+            const btn = document.getElementById('forgot-btn2');
+            const email = document.getElementById('forgot-email').value.trim();
+            const code = document.getElementById('forgot-code').value.trim();
+            const new_password = document.getElementById('forgot-new-pw').value;
+
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang xác minh...';
+
+            try {
+                const res = await fetch('/api/auth/verify-reset-code', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, code, new_password })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showAlert('forgot-alert', 'success', 'Mật khẩu đã được thay đổi thành công!');
+                    setTimeout(() => switchTab('login'), 2000);
+                } else {
+                    showAlert('forgot-alert', 'error', data.error || 'Mã xác nhận không đúng!');
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-check-circle"></i> ĐỔI MẬT KHẨU';
+                }
+            } catch (err) {
+                showAlert('forgot-alert', 'error', 'Lỗi kết nối server!');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-check-circle"></i> ĐỔI MẬT KHẨU';
+            }
+        }
+    </script>
+</body>
+</html>

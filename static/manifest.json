@@ -1,0 +1,22 @@
+{
+    "name": "Ai Là Triệu Phú",
+    "short_name": "Triệu Phú",
+    "description": "Game show trí tuệ - Ai Là Triệu Phú",
+    "start_url": "/",
+    "display": "standalone",
+    "orientation": "portrait",
+    "background_color": "#0a0025",
+    "theme_color": "#1a0a3e",
+    "icons": [
+        {
+            "src": "/static/icons/icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "/static/icons/icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        }
+    ]
+}

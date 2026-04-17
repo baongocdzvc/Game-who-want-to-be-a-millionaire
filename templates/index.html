@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="description" content="Game Ai Là Triệu Phú - Trò chơi trí tuệ hấp dẫn">
+    <meta name="theme-color" content="#1a0a3e">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>🎯 Ai Là Triệu Phú</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="manifest" href="/manifest.json">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+
+<body>
+    <!-- MÀN HÌNH CHÀO MỪNG -->
+    <div id="welcome-screen" class="screen active">
+        <div class="particles" id="particles"></div>
+        <div class="welcome-content">
+            <div class="logo-container">
+                <div class="logo-glow"></div>
+                <h1 class="game-title">
+                    <span class="title-line">AI LÀ</span>
+                    <span class="title-main">TRIỆU PHÚ</span>
+                    <span class="title-sub">Who Wants To Be A Millionaire</span>
+                </h1>
+            </div>
+            <div class="player-input">
+                <label id="welcome-text" style="font-size: 1.5rem; color: var(--gold); font-weight: bold;">Đang tải thông tin...</label>
+                <input type="hidden" id="player-name">
+            </div>
+            <button id="start-btn" class="btn-primary" onclick="startGame()">
+                <i class="fas fa-play"></i> BẮT ĐẦU CHƠI
+            </button>
+            <div class="rules-preview">
+                <h3><i class="fas fa-info-circle"></i> Luật chơi</h3>
+                <ul>
+                    <li>🎯 Trả lời đúng 15 câu hỏi để giành 150 triệu đồng</li>
+                    <li>⏱️ Mỗi câu hỏi có 30 giây suy nghĩ</li>
+                    <li>🆘 3 quyền trợ giúp: 50:50, Gọi điện, Hỏi khán giả</li>
+                    <li>💰 2 mốc an toàn: Câu 5 và Câu 10</li>
+                    <li>🤖 Chatbot MC hỗ trợ bạn suốt trò chơi</li>
+                </ul>
+            </div>
+
+            <!-- LỊCH SỬ CHƠI -->
+            <div id="history-container" class="history-list" style="display:none; margin-top: 20px;">
+                <h3 style="color: var(--gold); margin-bottom: 10px; font-size: 1.1rem;"><i class="fas fa-history"></i> Lịch sử chơi gần đây</h3>
+                <div class="history-scroll" id="history-items">
+                    <!-- Sẽ được điền bằng JS -->
+                </div>
+            </div>
+
+        </div>
+    </div>
+    <!-- MÀN HÌNH CHƠI GAME -->
+    <div id="game-screen" class="screen">
+        <div class="top-bar">
+            <div class="player-info" style="gap:15px;">
+                <i class="fas fa-user-astronaut"></i>
+                <span id="display-name">Người chơi</span>
+                <button onclick="doLogout()" title="Đăng xuất" style="background:rgba(233,69,96,0.15);border:1px solid rgba(233,69,96,0.4);color:#ff8a9b;border-radius:20px;padding:5px 12px;cursor:pointer;font-size:0.8em;transition:0.3s;" onmouseover="this.style.background='rgba(233,69,96,0.3)'" onmouseout="this.style.background='rgba(233,69,96,0.15)'">
+                    <i class="fas fa-sign-out-alt"></i> Thoát
+                </button>
+            </div>
+            <div class="timer-container">
+                <div class="timer-ring">
+                    <svg viewBox="0 0 100 100">
+                        <circle class="timer-bg" cx="50" cy="50" r="45"></circle>
+                        <circle class="timer-progress" id="timer-circle" cx="50" cy="50" r="45"></circle>
+                    </svg>
+                    <span class="timer-text" id="timer-text">30</span>
+                </div>
+            </div>
+            <div class="current-money"><i class="fas fa-coins"></i><span id="current-prize">0 đ</span></div>
+        </div>
+        <div class="game-main">
+            <div class="question-area">
+                <div class="question-header"
+                    style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <div class="question-number" id="question-number" style="margin-bottom: 0;">Câu hỏi 1/15</div>
+                    <button id="translate-btn" onclick="translateQuestion('English')"
+                        style="background: rgba(255,255,255,0.1); color: #fff; border: 1px solid #4ecdc4; border-radius: 20px; padding: 5px 12px; cursor: pointer; display: flex; align-items: center; gap: 5px; font-size: 0.9em; transition: 0.3s;"
+                        onmouseover="this.style.background='rgba(78,205,196,0.3)'"
+                        onmouseout="this.style.background='rgba(255,255,255,0.1)'"><i class="fas fa-language"></i> Dịch
+                        T.Anh</button>
+                </div>
+                <div class="question-box" id="question-box">
+                    <p id="question-text">Đang tải...</p>
+                </div>
+                <div class="answers-grid">
+                    <button class="answer-btn" id="answer-0" onclick="selectAnswer(0)"><span
+                            class="answer-letter">A</span><span class="answer-text" id="text-0">Đáp án A</span></button>
+                    <button class="answer-btn" id="answer-1" onclick="selectAnswer(1)"><span
+                            class="answer-letter">B</span><span class="answer-text" id="text-1">Đáp án B</span></button>
+                    <button class="answer-btn" id="answer-2" onclick="selectAnswer(2)"><span
+                            class="answer-letter">C</span><span class="answer-text" id="text-2">Đáp án C</span></button>
+                    <button class="answer-btn" id="answer-3" onclick="selectAnswer(3)"><span
+                            class="answer-letter">D</span><span class="answer-text" id="text-3">Đáp án D</span></button>
+                </div>
+            </div>
+            <div class="sidebar">
+                <div class="lifelines">
+                    <h3><i class="fas fa-life-ring"></i> Trợ giúp</h3>
+                    <div class="lifeline-buttons">
+                        <button class="lifeline-btn" id="lifeline-5050" onclick="useLifeline('5050')"><i
+                                class="fas fa-scissors"></i><span>50:50</span></button>
+                        <button class="lifeline-btn" id="lifeline-phone" onclick="useLifeline('phone')"><i
+                                class="fas fa-phone"></i><span>Gọi ĐT</span></button>
+                        <button class="lifeline-btn" id="lifeline-audience" onclick="useLifeline('audience')"><i
+                                class="fas fa-users"></i><span>Khán giả</span></button>
+                    </div>
+                </div>
+                <div class="money-ladder">
+                    <h3><i class="fas fa-trophy"></i> Bảng tiền</h3>
+                    <ul id="money-list"></ul>
+                </div>
+                <button class="btn-stop" id="stop-btn" onclick="stopGame()"><i class="fas fa-hand"></i> Dừng cuộc
+                    chơi</button>
+            </div>
+        </div>
+    </div>
+    <!-- MODAL TRỢ GIÚP -->
+    <div class="modal-overlay" id="modal-overlay">
+        <div class="modal" id="lifeline-modal">
+            <div class="modal-header">
+                <h2 id="modal-title">Kết quả trợ giúp</h2><button class="modal-close" onclick="closeModal()"><i
+                        class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body" id="modal-body"></div>
+            <button class="btn-primary modal-ok" onclick="closeModal()"><i class="fas fa-check"></i> Đã hiểu</button>
+        </div>
+    </div>
+    <!-- MÀN HÌNH KẾT QUẢ -->
+    <div id="result-screen" class="screen">
+        <div class="result-content">
+            <div class="result-icon" id="result-icon">🏆</div>
+            <h1 class="result-title" id="result-title">Chúc mừng!</h1>
+            <div class="result-details">
+                <p id="result-message">Bạn đã chiến thắng!</p>
+                <div class="result-prize" id="result-prize"><span class="prize-label">Số tiền nhận được:</span><span
+                        class="prize-amount" id="prize-amount">0 đ</span></div>
+                <div class="result-stats">
+                    <div class="stat"><i class="fas fa-check-circle"></i><span id="correct-count">0</span><label>Câu
+                            đúng</label></div>
+                    <div class="stat"><i class="fas fa-clock"></i><span id="total-time">0s</span><label>Thời
+                            gian</label></div>
+                </div>
+            </div>
+            <button class="btn-primary" onclick="resetGame()"><i class="fas fa-redo"></i> Chơi lại</button>
+        </div>
+    </div>
+    <!-- CHATBOT -->
+    <button class="chatbot-toggle" id="chatbot-toggle" onclick="toggleChatbot()"><i class="fas fa-robot"></i><span
+            class="chat-badge" id="chat-badge" style="display:none">1</span></button>
+    <div class="chatbot-window" id="chatbot-window">
+        <div class="chatbot-header">
+            <div class="chatbot-info">
+                <div class="chatbot-avatar">🤖</div>
+                <div>
+                    <h4>MC Trợ Lý</h4><span class="chatbot-status">Online</span>
+                </div>
+            </div>
+            <button class="chatbot-close" onclick="toggleChatbot()"><i class="fas fa-minus"></i></button>
+        </div>
+        <div class="chatbot-messages" id="chatbot-messages"></div>
+        <div class="chatbot-input">
+            <input type="text" id="chat-input" placeholder="Nhắn tin với MC..."
+                onkeypress="if(event.key==='Enter') sendChat()">
+            <button onclick="sendChat()"><i class="fas fa-paper-plane"></i></button>
+        </div>
+    </div>
+    <button class="sound-toggle" id="sound-toggle" onclick="toggleSound()"><i class="fas fa-volume-up"
+            id="sound-icon"></i></button>
+    <script src="/static/js/game.js"></script>
+    <script>
+        // Tự động lấy tên người dùng đã đăng nhập từ session
+        fetch('/api/auth/me')
+            .then(r => r.json())
+            .then(d => {
+                if (!d.logged_in) { window.location.href = '/auth'; return; }
+                const nameInput = document.getElementById('player-name');
+                const welcomeText = document.getElementById('welcome-text');
+                if (nameInput && welcomeText) {
+                    nameInput.value = d.display_name;
+                    welcomeText.innerText = "Chào mừng, " + d.display_name + "!";
+                    playerName = d.display_name;
+                }
+                
+                // Lấy lịch sử
+                loadHistory();
+            });
+
+        async function loadHistory() {
+            try {
+                const r = await fetch('/api/game/history');
+                const d = await r.json();
+                if (d.success && d.history && d.history.length > 0) {
+                    const container = document.getElementById('history-container');
+                    const itemsList = document.getElementById('history-items');
+                    container.style.display = 'block';
+                    itemsList.innerHTML = d.history.map(h => `
+                        <div class="history-item ${h.result}">
+                            <div class="h-main">
+                                <span class="h-result">${h.result === 'win' ? '🏆 THẮNG' : '❌ THUA'}</span>
+                                <span class="h-prize">${h.score.toLocaleString()} đ</span>
+                            </div>
+                            <div class="h-meta">
+                                <span>${h.duration_sec}s</span>
+                                <span>${new Date(h.played_at).toLocaleDateString('vi-VN')}</span>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+            } catch (e) {
+                console.error("Lỗi lấy lịch sử:", e);
+            }
+        }
+
+
+        // Đăng xuất
+        async function doLogout() {
+            if (!confirm('Bạn muốn đăng xuất khỏi game?')) return;
+            await fetch('/api/auth/logout', { method: 'POST' });
+            window.location.href = '/auth';
+        }
+    </script>
+</body>
+
+</html>
