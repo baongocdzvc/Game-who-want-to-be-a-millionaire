@@ -1401,7 +1401,8 @@ def shop_webhook():
 
         # 1.1 Kiểm tra xem có phải định dạng đơn hàng AMT_...
         # Hỗ trợ cả trường hợp có hoặc không có dấu gạch dưới '_', dấu cách hoặc dấu gạch ngang do ngân hàng/người dùng lọc bỏ
-        match_amt = re.search(r'AMT[\s_-]?(\d+)[\s_-]?([A-Z0-9]{6})', content, re.IGNORECASE)
+        # Sử dụng \d{10} (độ dài Unix timestamp) để tránh việc regex tham lam nuốt luôn chữ số đầu của phần mã hex ở đuôi.
+        match_amt = re.search(r'AMT[\s_-]?(\d{10})[\s_-]?([A-Z0-9]{6})', content, re.IGNORECASE)
         if match_amt:
             payment_ref = f"AMT_{match_amt.group(1)}_{match_amt.group(2).upper()}"
             status = 'paid'
