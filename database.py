@@ -102,6 +102,28 @@ CREATE TABLE IF NOT EXISTS password_reset_codes (
     is_used      BOOLEAN      DEFAULT FALSE
 );
 
+-- 6. BẢNG VÍ CHI TIẾT (Lượt chơi & Trợ giúp)
+CREATE TABLE IF NOT EXISTS user_wallets (
+    user_id         INT          PRIMARY KEY REFERENCES users(user_id) ON DELETE CASCADE,
+    game_turns      INT          DEFAULT 3,
+    bonus_lifelines INT          DEFAULT 0,
+    updated_at      TIMESTAMP    DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 7. BẢNG GIAO DỊCH CỬA HÀNG
+CREATE TABLE IF NOT EXISTS shop_transactions (
+    transaction_id SERIAL PRIMARY KEY,
+    user_id        INT          NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    item_type      VARCHAR(50)  NOT NULL, -- 'game_turn' hoặc 'bonus_lifeline'
+    quantity       INT          NOT NULL,
+    total_price    INT          NOT NULL,
+    payment_ref    VARCHAR(100) UNIQUE NOT NULL,
+    status         VARCHAR(20)  DEFAULT 'pending', -- 'pending', 'paid', 'failed'
+    created_at     TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+    updated_at     TIMESTAMP    DEFAULT CURRENT_TIMESTAMP
+);
+
+
 """
 
 # ============================================================

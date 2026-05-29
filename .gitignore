@@ -1,16 +1,25 @@
-# Python
+# Secrets & Configuration
+.env
+
+# Python & Virtual Environments
 __pycache__/
 *.py[cod]
 *.egg-info/
 dist/
 build/
 venv/
-.env
+.venv/
 
-# OS
+# OS specific files
 .DS_Store
 Thumbs.db
 
-# IDE
+# IDE settings
 .vscode/
 .idea/
+
+# Binaries, Logs & Compressed files (ngrok, zip, log)
+ngrok
+ngrok 2
+*.zip
+*.log

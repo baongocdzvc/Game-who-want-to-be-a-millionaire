@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0D0D1A">
+<title>🛒 Cửa hàng — Ai Là Triệu Phú</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&family=DM+Sans:wght@400;500;700&family=Bungee&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0D0D1A;--fg:#fff;--muted:#2D1B4E;
+  --accent:#FF3AF2;--cyan:#00F5D4;--yellow:#FFE600;
+  --orange:#FF6B35;--purple:#7B2FFF;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{
+  font-family:'DM Sans',sans-serif;
+  background:var(--bg);color:var(--fg);
+  min-height:100vh;overflow-x:hidden;
+}
+body::before{
+  content:'';position:fixed;inset:0;
+  background-image:radial-gradient(circle,rgba(255,230,0,.8) 1px,transparent 1px);
+  background-size:30px 30px;opacity:.05;pointer-events:none;z-index:0;
+}
+body::after{
+  content:'';position:fixed;inset:0;
+  background-image:repeating-linear-gradient(135deg,transparent,transparent 18px,rgba(123,47,255,.04) 18px,rgba(123,47,255,.04) 36px);
+  pointer-events:none;z-index:0;
+}
+
+/* ── NAV ── */
+.nav{
+  position:sticky;top:0;z-index:50;
+  display:flex;justify-content:space-between;align-items:center;
+  padding:12px 24px;
+  background:rgba(13,13,26,.92);
+  border-bottom:4px solid var(--yellow);
+  backdrop-filter:blur(12px);
+  box-shadow:0 4px 0 var(--orange),0 8px 30px rgba(255,230,0,.1);
+}
+.nav-brand{
+  display:flex;align-items:center;gap:10px;
+  font-family:'Bungee',cursive;font-size:1rem;
+  color:var(--yellow);letter-spacing:2px;
+  text-shadow:2px 2px 0 var(--orange);
+  text-decoration:none;
+}
+.nav-brand .emoji{font-size:1.4rem;}
+
+.wallet-chip{
+  display:flex;align-items:center;gap:16px;flex-wrap:wrap;
+}
+.wchip{
+  display:flex;align-items:center;gap:6px;
+  background:rgba(255,255,255,.06);
+  border:3px solid;border-radius:9999px;
+  padding:6px 14px;
+  font-family:'Outfit',sans-serif;font-size:.88rem;font-weight:700;
+}
+.wchip.turns{border-color:var(--cyan);color:var(--cyan);}
+.wchip.lifelines{border-color:var(--purple);color:var(--purple);}
+.wchip .wval{font-size:1.1rem;font-weight:900;}
+
+.btn-back{
+  display:flex;align-items:center;gap:6px;
+  background:rgba(255,58,242,.1);
+  border:3px dashed var(--accent);border-radius:9999px;
+  padding:7px 16px;color:var(--accent);
+  font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:700;
+  cursor:pointer;transition:.3s;letter-spacing:1px;text-transform:uppercase;
+  text-decoration:none;
+}
+.btn-back:hover{background:rgba(255,58,242,.2);}
+
+/* ── HERO ── */
+.hero{
+  text-align:center;padding:48px 20px 32px;
+  position:relative;z-index:1;
+}
+.hero-bg-text{
+  position:absolute;top:0;left:50%;transform:translateX(-50%);
+  font-family:'Bungee',cursive;font-size:clamp(80px,18vw,200px);
+  color:rgba(255,230,0,.04);pointer-events:none;white-space:nowrap;
+  letter-spacing:-5px;user-select:none;
+}
+.hero h1{
+  font-family:'Outfit',sans-serif;font-size:clamp(2rem,7vw,4rem);
+  font-weight:900;text-transform:uppercase;line-height:1;
+  position:relative;z-index:1;
+  background:linear-gradient(90deg,var(--yellow),var(--orange),var(--accent),var(--yellow));
+  background-size:250%;-webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;background-clip:text;
+  animation:gs 4s ease infinite;
+}
+@keyframes gs{0%,100%{background-position:0%}50%{background-position:100%}}
+.hero p{
+  margin-top:12px;color:rgba(255,255,255,.55);font-size:1rem;
+  position:relative;z-index:1;letter-spacing:1px;
+}
+
+/* FLOATING DECOS */
+.fdeco{position:fixed;pointer-events:none;z-index:0;font-size:clamp(18px,4vw,40px);animation:flt 6s ease-in-out infinite;}
+.fdeco:nth-child(1){top:12%;left:3%;color:var(--accent);animation-delay:.2s;}
+.fdeco:nth-child(2){top:35%;right:2%;color:var(--yellow);animation-delay:1.2s;animation-duration:5s;}
+.fdeco:nth-child(3){bottom:25%;left:2%;color:var(--cyan);animation-delay:2s;animation-duration:7s;}
+.fdeco:nth-child(4){bottom:10%;right:4%;color:var(--purple);animation-delay:.8s;}
+@keyframes flt{0%,100%{transform:translateY(0) rotate(0deg)}50%{transform:translateY(-16px) rotate(10deg)}}
+
+/* ── SHOP GRID ── */
+.shop-grid{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
+  gap:20px;max-width:900px;margin:0 auto;
+  padding:0 20px 40px;position:relative;z-index:1;
+}
+
+/* PRODUCT CARD */
+.product-card{
+  border-radius:28px;padding:32px 28px;
+  position:relative;overflow:hidden;
+  transition:all .3s cubic-bezier(.68,-.55,.265,1.55);
+}
+.product-card::before{
+  content:'';position:absolute;inset:0;border-radius:24px;
+  background-image:radial-gradient(circle at 80% 10%,rgba(255,255,255,.06) 0%,transparent 50%);
+  pointer-events:none;
+}
+.product-card.turns-card{
+  background:linear-gradient(135deg,rgba(0,245,212,.12),rgba(45,27,78,.9));
+  border:4px solid var(--cyan);
+  box-shadow:8px 8px 0 var(--purple),16px 16px 0 rgba(123,47,255,.3),
+             0 0 40px rgba(0,245,212,.1);
+}
+.product-card.lifeline-card{
+  background:linear-gradient(135deg,rgba(123,47,255,.15),rgba(45,27,78,.9));
+  border:4px solid var(--purple);
+  box-shadow:8px 8px 0 var(--accent),16px 16px 0 rgba(255,58,242,.25),
+             0 0 40px rgba(123,47,255,.1);
+}
+.product-card:hover{
+  transform:translateY(-6px) rotate(-.5deg);
+}
+.product-card.turns-card:hover{box-shadow:12px 12px 0 var(--purple),24px 24px 0 rgba(123,47,255,.4),0 0 60px rgba(0,245,212,.2);}
+.product-card.lifeline-card:hover{box-shadow:12px 12px 0 var(--accent),24px 24px 0 rgba(255,58,242,.35),0 0 60px rgba(123,47,255,.2);}
+
+.card-icon{font-size:3.5rem;display:block;margin-bottom:16px;animation:iconWig 2s ease-in-out infinite;}
+@keyframes iconWig{0%,100%{transform:rotate(-4deg)}50%{transform:rotate(4deg)}}
+
+.card-name{
+  font-family:'Bungee',cursive;font-size:1.4rem;letter-spacing:2px;
+  text-transform:uppercase;margin-bottom:8px;
+}
+.turns-card .card-name{color:var(--cyan);text-shadow:2px 2px 0 var(--purple);}
+.lifeline-card .card-name{color:var(--purple);text-shadow:2px 2px 0 var(--accent);}
+
+.card-desc{font-size:.9rem;color:rgba(255,255,255,.65);line-height:1.6;margin-bottom:20px;}
+
+.price-row{
+  display:flex;align-items:baseline;gap:8px;margin-bottom:24px;
+  flex-wrap:wrap;
+}
+.price-amount{
+  font-family:'Outfit',sans-serif;font-size:2rem;font-weight:900;
+  color:var(--yellow);
+  text-shadow:2px 2px 0 var(--orange);
+}
+.price-unit{font-size:.85rem;color:rgba(255,255,255,.45);letter-spacing:1px;}
+
+/* QTY SELECTOR */
+.qty-row{display:flex;align-items:center;gap:10px;margin-bottom:22px;flex-wrap:wrap;}
+.qty-label{font-size:.78rem;color:rgba(255,255,255,.5);letter-spacing:1px;text-transform:uppercase;font-weight:700;}
+.qty-btns{display:flex;align-items:center;gap:6px;}
+.qty-btn{
+  width:34px;height:34px;border-radius:10px;
+  border:3px solid;background:transparent;
+  font-family:'Outfit',sans-serif;font-size:1.1rem;font-weight:900;
+  cursor:pointer;transition:.2s;display:flex;align-items:center;justify-content:center;
+}
+.turns-card .qty-btn{border-color:var(--cyan);color:var(--cyan);}
+.turns-card .qty-btn:hover{background:rgba(0,245,212,.2);}
+.lifeline-card .qty-btn{border-color:var(--purple);color:var(--purple);}
+.lifeline-card .qty-btn:hover{background:rgba(123,47,255,.2);}
+.qty-val{
+  font-family:'Outfit',sans-serif;font-size:1.3rem;font-weight:900;
+  min-width:40px;text-align:center;color:#fff;
+}
+.qty-presets{display:flex;gap:6px;flex-wrap:wrap;}
+.qty-preset{
+  padding:4px 12px;border-radius:8px;border:2px solid;
+  font-size:.78rem;font-weight:700;cursor:pointer;transition:.2s;
+  font-family:'DM Sans',sans-serif;
+}
+.turns-card .qty-preset{border-color:rgba(0,245,212,.35);color:rgba(0,245,212,.7);}
+.turns-card .qty-preset:hover,.turns-card .qty-preset.active{background:rgba(0,245,212,.2);border-color:var(--cyan);color:var(--cyan);}
+.lifeline-card .qty-preset{border-color:rgba(123,47,255,.35);color:rgba(123,47,255,.7);}
+.lifeline-card .qty-preset:hover,.lifeline-card .qty-preset.active{background:rgba(123,47,255,.2);border-color:var(--purple);color:var(--purple);}
+
+.total-row{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:12px 16px;border-radius:12px;margin-bottom:20px;
+  background:rgba(0,0,0,.25);border:2px dashed rgba(255,255,255,.1);
+  flex-wrap:wrap;gap:8px;
+}
+.total-label{font-size:.8rem;color:rgba(255,255,255,.5);letter-spacing:1px;text-transform:uppercase;font-weight:700;}
+.total-val{font-family:'Outfit',sans-serif;font-size:1.4rem;font-weight:900;color:var(--yellow);}
+
+/* BUY BUTTON */
+.btn-buy{
+  width:100%;padding:15px;
+  font-family:'Outfit',sans-serif;font-size:1rem;font-weight:900;
+  letter-spacing:3px;text-transform:uppercase;
+  color:#000;border:none;border-radius:9999px;cursor:pointer;
+  transition:all .3s cubic-bezier(.68,-.55,.265,1.55);
+  position:relative;overflow:hidden;
+}
+.turns-card .btn-buy{
+  background:linear-gradient(135deg,var(--cyan),#00c4aa);
+  box-shadow:4px 4px 0 var(--purple),0 0 25px rgba(0,245,212,.2);
+}
+.turns-card .btn-buy:hover{transform:scale(1.04) rotate(-.5deg);box-shadow:8px 8px 0 var(--purple),0 0 40px rgba(0,245,212,.3);}
+.lifeline-card .btn-buy{
+  background:linear-gradient(135deg,var(--purple),#5a1fd1);
+  color:#fff;
+  box-shadow:4px 4px 0 var(--accent),0 0 25px rgba(123,47,255,.25);
+}
+.lifeline-card .btn-buy:hover{transform:scale(1.04) rotate(.5deg);box-shadow:8px 8px 0 var(--accent),0 0 40px rgba(123,47,255,.35);}
+.btn-buy:active{transform:scale(.97)!important;}
+.btn-buy:disabled{opacity:.5;cursor:not-allowed;transform:none!important;}
+.btn-buy::after{
+  content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;
+  background:linear-gradient(transparent,rgba(255,255,255,.12),transparent);
+  transform:rotate(45deg);animation:shine 3s ease-in-out infinite;
+}
+@keyframes shine{0%{transform:translateX(-100%) rotate(45deg)}100%{transform:translateX(100%) rotate(45deg)}}
+
+/* ── HISTORY SECTION ── */
+.history-section{
+  max-width:900px;margin:0 auto 60px;
+  padding:0 20px;position:relative;z-index:1;
+}
+.section-title{
+  font-family:'Bungee',cursive;font-size:1rem;
+  color:var(--orange);letter-spacing:3px;text-transform:uppercase;
+  margin-bottom:16px;display:flex;align-items:center;gap:10px;
+  text-shadow:2px 2px 0 rgba(255,107,53,.4);
+}
+.txn-list{display:flex;flex-direction:column;gap:8px;}
+.txn-item{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:12px 18px;border-radius:14px;
+  background:rgba(45,27,78,.5);
+  border:3px solid rgba(255,255,255,.06);
+  border-left:4px solid;
+  transition:.2s;flex-wrap:wrap;gap:8px;
+}
+.txn-item:hover{background:rgba(45,27,78,.7);}
+.txn-item[data-type="game_turn"]{border-left-color:var(--cyan);}
+.txn-item[data-type="bonus_lifeline"]{border-left-color:var(--purple);}
+.txn-left{display:flex;flex-direction:column;gap:3px;}
+.txn-name{font-family:'Outfit',sans-serif;font-size:.9rem;font-weight:700;color:#fff;}
+.txn-meta{font-size:.75rem;color:rgba(255,255,255,.4);}
+.txn-right{display:flex;flex-direction:column;align-items:flex-end;gap:4px;}
+.txn-price{font-family:'Outfit',sans-serif;font-size:1rem;font-weight:900;color:var(--yellow);}
+.txn-status{
+  font-size:.7rem;font-weight:700;padding:3px 10px;border-radius:6px;letter-spacing:1px;text-transform:uppercase;
+}
+.txn-status.paid{background:rgba(0,245,212,.15);color:var(--cyan);border:1px solid rgba(0,245,212,.3);}
+.txn-status.pending{background:rgba(255,230,0,.12);color:var(--yellow);border:1px solid rgba(255,230,0,.3);}
+.txn-status.failed{background:rgba(255,58,242,.12);color:var(--accent);border:1px solid rgba(255,58,242,.25);}
+
+/* ── PAYMENT MODAL ── */
+.overlay{
+  display:none;position:fixed;inset:0;
+  background:rgba(13,13,26,.88);backdrop-filter:blur(10px);
+  z-index:200;justify-content:center;align-items:center;
+}
+.overlay.show{display:flex;animation:fadeIn .3s ease;}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+
+.pay-modal{
+  background:linear-gradient(135deg,#1a0a3e,#0f2050);
+  border:4px solid var(--yellow);border-radius:28px;
+  padding:32px 28px;max-width:440px;width:90%;
+  box-shadow:8px 8px 0 var(--accent),16px 16px 0 rgba(255,58,242,.25);
+  position:relative;overflow:hidden;
+}
+.pay-modal::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse at 80% 20%,rgba(255,230,0,.06) 0%,transparent 50%),
+              radial-gradient(ellipse at 10% 80%,rgba(0,245,212,.05) 0%,transparent 50%);
+  pointer-events:none;
+}
+.modal-head{
+  display:flex;justify-content:space-between;align-items:flex-start;
+  margin-bottom:20px;
+}
+.modal-head h2{
+  font-family:'Bungee',cursive;font-size:1.1rem;
+  color:var(--yellow);letter-spacing:2px;
+  text-shadow:2px 2px 0 var(--orange);
+}
+.modal-close{
+  background:rgba(255,58,242,.15);border:2px solid var(--accent);
+  border-radius:8px;width:30px;height:30px;
+  color:var(--accent);font-size:.9rem;font-weight:900;
+  cursor:pointer;transition:.2s;display:flex;align-items:center;justify-content:center;
+  font-family:'Outfit',sans-serif;
+}
+.modal-close:hover{background:rgba(255,58,242,.3);}
+
+/* Order summary inside modal */
+.order-summary{
+  background:rgba(0,0,0,.3);border:2px dashed rgba(255,255,255,.1);
+  border-radius:14px;padding:16px;margin-bottom:18px;
+  position:relative;z-index:1;
+}
+.os-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;}
+.os-label{font-size:.82rem;color:rgba(255,255,255,.5);}
+.os-val{font-family:'Outfit',sans-serif;font-size:.95rem;font-weight:700;color:#fff;}
+.os-divider{border:none;border-top:1px dashed rgba(255,255,255,.1);margin:8px 0;}
+.os-total-row{display:flex;justify-content:space-between;align-items:center;}
+.os-total-label{font-size:.85rem;font-weight:700;color:rgba(255,255,255,.7);letter-spacing:1px;text-transform:uppercase;}
+.os-total-val{font-family:'Bungee',cursive;font-size:1.6rem;color:var(--yellow);text-shadow:2px 2px 0 var(--orange);}
+
+/* Payment ref box */
+.pay-ref-box{
+  background:rgba(255,230,0,.06);border:2px solid rgba(255,230,0,.2);
+  border-radius:10px;padding:10px 14px;margin-bottom:18px;
+  position:relative;z-index:1;
+}
+.pay-ref-label{font-size:.72rem;color:rgba(255,255,255,.45);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;}
+.pay-ref-val{font-family:'DM Sans',sans-serif;font-size:.88rem;color:var(--yellow);font-weight:700;word-break:break-all;}
+
+/* Webhook info */
+.webhook-info{
+  background:rgba(0,245,212,.06);border:2px dashed rgba(0,245,212,.2);
+  border-radius:10px;padding:12px 14px;margin-bottom:18px;
+  font-size:.82rem;color:rgba(255,255,255,.6);line-height:1.6;
+  position:relative;z-index:1;
+}
+.webhook-info code{
+  display:block;margin-top:6px;padding:8px 10px;
+  background:rgba(0,0,0,.35);border-radius:6px;
+  font-size:.78rem;color:var(--cyan);
+  white-space:pre;overflow-x:auto;
+  font-family:'Courier New',monospace;
+}
+
+/* Modal status */
+.modal-status{
+  display:none;padding:10px 14px;border-radius:10px;
+  font-size:.88rem;margin-bottom:14px;
+  align-items:center;gap:8px;
+  position:relative;z-index:1;
+}
+.modal-status.show{display:flex;}
+.modal-status.success{background:rgba(0,245,212,.12);border:2px solid rgba(0,245,212,.3);color:var(--cyan);}
+.modal-status.error{background:rgba(255,58,242,.12);border:2px solid rgba(255,58,242,.3);color:var(--accent);}
+
+/* Simulate btn (dev mode) */
+.btn-simulate{
+  width:100%;padding:13px;margin-bottom:10px;
+  font-family:'Outfit',sans-serif;font-size:.88rem;font-weight:900;
+  letter-spacing:2px;text-transform:uppercase;
+  background:transparent;
+  border:3px dashed var(--cyan);border-radius:9999px;
+  color:var(--cyan);cursor:pointer;transition:.3s;
+  position:relative;z-index:1;
+}
+.btn-simulate:hover{background:rgba(0,245,212,.1);}
+
+.btn-confirm-pay{
+  width:100%;padding:14px;
+  font-family:'Outfit',sans-serif;font-size:1rem;font-weight:900;
+  letter-spacing:3px;text-transform:uppercase;
+  color:#000;border:none;border-radius:9999px;cursor:pointer;
+  background:linear-gradient(135deg,var(--yellow),var(--orange));
+  box-shadow:4px 4px 0 var(--purple);
+  transition:all .3s cubic-bezier(.68,-.55,.265,1.55);
+  position:relative;z-index:1;
+}
+.btn-confirm-pay:hover{transform:scale(1.04);box-shadow:8px 8px 0 var(--purple);}
+.btn-confirm-pay:disabled{opacity:.5;cursor:not-allowed;transform:none;}
+
+/* ── TOAST ── */
+.toast-wrap{position:fixed;top:80px;right:20px;z-index:999;display:flex;flex-direction:column;gap:8px;pointer-events:none;}
+.toast{
+  display:flex;align-items:center;gap:10px;
+  padding:12px 18px;border-radius:14px;
+  font-family:'Outfit',sans-serif;font-size:.9rem;font-weight:700;
+  max-width:320px;
+  pointer-events:auto;
+  animation:toastIn .4s cubic-bezier(.68,-.55,.265,1.55),toastOut .4s ease forwards;
+  animation-delay:0s,3.5s;
+}
+@keyframes toastIn{from{opacity:0;transform:translateX(60px)}to{opacity:1;transform:translateX(0)}}
+@keyframes toastOut{from{opacity:1;transform:translateX(0)}to{opacity:0;transform:translateX(60px)}}
+.toast.success{background:rgba(0,245,212,.15);border:3px solid var(--cyan);color:var(--cyan);box-shadow:4px 4px 0 var(--purple);}
+.toast.error{background:rgba(255,58,242,.15);border:3px solid var(--accent);color:var(--accent);box-shadow:4px 4px 0 var(--yellow);}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar{width:5px;}
+::-webkit-scrollbar-thumb{background:rgba(255,58,242,.3);border-radius:3px;}
+
+@media(max-width:600px){
+  .shop-grid{grid-template-columns:1fr;}
+  .nav{flex-wrap:wrap;gap:8px;}
+  .wallet-chip{justify-content:center;}
+}
+</style>
+</head>
+<body>
+
+<!-- Decos -->
+<div class="fdeco" aria-hidden="true">✦</div>
+<div class="fdeco" aria-hidden="true">★</div>
+<div class="fdeco" aria-hidden="true">◆</div>
+<div class="fdeco" aria-hidden="true">❋</div>
+
+<!-- NAV -->
+<nav class="nav">
+  <a href="/" class="nav-brand">
+    <span class="emoji" aria-hidden="true">🎯</span> AI LÀ TRIỆU PHÚ
+  </a>
+  <div class="wallet-chip">
+    <div class="wchip turns">
+      🎮 <span>Lượt chơi:</span> <span class="wval" id="nav-turns">...</span>
+    </div>
+    <div class="wchip lifelines">
+      ⚡ <span>Trợ giúp:</span> <span class="wval" id="nav-lifelines">...</span>
+    </div>
+  </div>
+  <a href="/" class="btn-back">← Về trang chơi</a>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg-text" aria-hidden="true">SHOP</div>
+  <h1>🛒 Cửa hàng</h1>
+  <p>Nạp thêm lượt chơi & quyền trợ giúp để chinh phục 150 triệu đồng!</p>
+</section>
+
+<!-- SHOP GRID -->
+<div class="shop-grid">
+
+  <!-- CARD 1: Lượt chơi -->
+  <div class="product-card turns-card">
+    <span class="card-icon" aria-hidden="true">🎮</span>
+    <div class="card-name">Lượt chơi</div>
+    <p class="card-desc">Mỗi ván chơi tiêu thụ 1 lượt. Hết lượt sẽ không thể bắt đầu ván mới. Bạn nhận <strong>3 lượt miễn phí</strong> khi đăng ký!</p>
+    <div class="price-row">
+      <span class="price-amount">5.000đ</span>
+      <span class="price-unit">/ lượt</span>
+    </div>
+    <div class="qty-row">
+      <span class="qty-label">Số lượng</span>
+      <div class="qty-btns">
+        <button class="qty-btn" onclick="changeQty('turns',-1)">−</button>
+        <span class="qty-val" id="qty-turns">1</span>
+        <button class="qty-btn" onclick="changeQty('turns',1)">+</button>
+      </div>
+      <div class="qty-presets">
+        <button class="qty-preset" onclick="setQty('turns',1)" data-val="1">×1</button>
+        <button class="qty-preset" onclick="setQty('turns',3)" data-val="3">×3</button>
+        <button class="qty-preset" onclick="setQty('turns',5)" data-val="5">×5</button>
+        <button class="qty-preset" onclick="setQty('turns',10)" data-val="10">×10</button>
+      </div>
+    </div>
+    <div class="total-row">
+      <span class="total-label">Tổng cộng</span>
+      <span class="total-val" id="total-turns">5.000đ</span>
+    </div>
+    <button class="btn-buy" onclick="openPayModal('game_turn','turns')">
+      💳 MUA NGAY
+    </button>
+  </div>
+
+  <!-- CARD 2: Lượt trợ giúp -->
+  <div class="product-card lifeline-card">
+    <span class="card-icon" aria-hidden="true">⚡</span>
+    <div class="card-name">Lượt trợ giúp</div>
+    <p class="card-desc">Mỗi ván chơi có sẵn 3 quyền trợ giúp mặc định (50:50, Gọi ĐT, Hỏi khán giả). Mua thêm để có thêm lượt dùng trong ván tiếp theo!</p>
+    <div class="price-row">
+      <span class="price-amount">2.000đ</span>
+      <span class="price-unit">/ lượt</span>
+    </div>
+    <div class="qty-row">
+      <span class="qty-label">Số lượng</span>
+      <div class="qty-btns">
+        <button class="qty-btn" onclick="changeQty('lifelines',-1)">−</button>
+        <span class="qty-val" id="qty-lifelines">1</span>
+        <button class="qty-btn" onclick="changeQty('lifelines',1)">+</button>
+      </div>
+      <div class="qty-presets">
+        <button class="qty-preset" onclick="setQty('lifelines',1)" data-val="1">×1</button>
+        <button class="qty-preset" onclick="setQty('lifelines',3)" data-val="3">×3</button>
+        <button class="qty-preset" onclick="setQty('lifelines',5)" data-val="5">×5</button>
+        <button class="qty-preset" onclick="setQty('lifelines',10)" data-val="10">×10</button>
+      </div>
+    </div>
+    <div class="total-row">
+      <span class="total-label">Tổng cộng</span>
+      <span class="total-val" id="total-lifelines">2.000đ</span>
+    </div>
+    <button class="btn-buy" onclick="openPayModal('bonus_lifeline','lifelines')">
+      💳 MUA NGAY
+    </button>
+  </div>
+
+</div>
+
+<!-- HISTORY -->
+<section class="history-section">
+  <div class="section-title">📜 Lịch sử mua hàng</div>
+  <div class="txn-list" id="txn-list">
+    <div style="color:rgba(255,255,255,.4);font-size:.9rem;text-align:center;padding:20px;">Đang tải...</div>
+  </div>
+</section>
+
+<!-- ─── PAYMENT MODAL ─── -->
+<div class="overlay" id="pay-overlay">
+  <div class="pay-modal">
+    <div class="modal-head">
+      <h2 id="modal-title">💳 XÁC NHẬN THANH TOÁN</h2>
+      <button class="modal-close" onclick="closePayModal()">✕</button>
+    </div>
+
+    <!-- Order summary -->
+    <div class="order-summary">
+      <div class="os-row">
+        <span class="os-label">Sản phẩm</span>
+        <span class="os-val" id="modal-item-name">—</span>
+      </div>
+      <div class="os-row">
+        <span class="os-label">Đơn giá</span>
+        <span class="os-val" id="modal-unit-price">—</span>
+      </div>
+      <div class="os-row">
+        <span class="os-label">Số lượng</span>
+        <span class="os-val" id="modal-qty">—</span>
+      </div>
+      <hr class="os-divider">
+      <div class="os-total-row">
+        <span class="os-total-label">Tổng</span>
+        <span class="os-total-val" id="modal-total">—</span>
+      </div>
+    </div>
+
+    <!-- Payment ref (hiện sau khi tạo đơn) -->
+    <div class="pay-ref-box" id="pay-ref-box" style="display:none;">
+      <div class="pay-ref-label">Mã đơn hàng</div>
+      <div class="pay-ref-val" id="pay-ref-val">—</div>
+    </div>
+
+    <!-- Webhook instruction -->
+    <div class="webhook-info" id="webhook-info" style="display:none;">
+      Gửi mã đơn hàng này sang cổng thanh toán. Sau khi thanh toán xong, cổng gọi callback về:
+      <code id="webhook-endpoint">POST /api/shop/webhook</code>
+    </div>
+
+    <!-- Status message -->
+    <div class="modal-status" id="modal-status"></div>
+
+    <!-- Dev: Simulate paid (DISABLED in production) -->
+    <!-- <button class="btn-simulate" id="btn-simulate" onclick="simulatePaid()" style="display:none;">
+      🧪 [DEV] Giả lập thanh toán thành công
+    </button> -->
+
+    <!-- Main action -->
+    <button class="btn-confirm-pay" id="btn-confirm" onclick="confirmOrder()">
+      ▶ TẠO ĐƠN HÀNG
+    </button>
+
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast-wrap" id="toast-wrap"></div>
+
+<script>
+// ── State ──
+const PRICES = {game_turn: 5000, bonus_lifeline: 2000};
+const LABELS = {game_turn: 'Lượt chơi', bonus_lifeline: 'Lượt trợ giúp'};
+let qty = {turns: 1, lifelines: 1};
+let currentOrder = null; // {item_type, quantity, txn_id, payment_ref}
+
+// ── Load wallet ──
+async function loadWallet() {
+  try {
+    const r = await fetch('/api/shop/wallet');
+    const d = await r.json();
+    if (d.success) {
+      document.getElementById('nav-turns').textContent = d.game_turns;
+      document.getElementById('nav-lifelines').textContent = d.bonus_lifelines;
+    }
+  } catch(e) { console.error('wallet error', e); }
+}
+
+// ── Load history ──
+async function loadHistory() {
+  const el = document.getElementById('txn-list');
+  try {
+    const r = await fetch('/api/shop/history');
+    const d = await r.json();
+    if (!d.success || !d.transactions.length) {
+      el.innerHTML = '<div style="color:rgba(255,255,255,.35);font-size:.9rem;text-align:center;padding:20px;">Chưa có giao dịch nào.</div>';
+      return;
+    }
+    const statusMap = {paid:'paid',pending:'pending',failed:'failed',refunded:'failed'};
+    const statusLabel = {paid:'✅ Thành công',pending:'⏳ Chờ TT',failed:'❌ Thất bại',refunded:'↩ Hoàn tiền'};
+    el.innerHTML = d.transactions.map(t => `
+      <div class="txn-item" data-type="${t.item_type}">
+        <div class="txn-left">
+          <div class="txn-name">${LABELS[t.item_type] || t.item_type} ×${t.quantity}</div>
+          <div class="txn-meta">${t.payment_ref || '—'} · ${new Date(t.created_at).toLocaleString('vi-VN')}</div>
+        </div>
+        <div class="txn-right">
+          <div class="txn-price">${t.total_price.toLocaleString('vi-VN')}đ</div>
+          <div class="txn-status ${statusMap[t.status]||'pending'}">${statusLabel[t.status]||t.status}</div>
+        </div>
+      </div>
+    `).join('');
+  } catch(e) {
+    el.innerHTML = '<div style="color:rgba(255,58,242,.7);font-size:.9rem;text-align:center;padding:20px;">Lỗi tải lịch sử.</div>';
+  }
+}
+
+// ── Qty controls ──
+function changeQty(type, delta) {
+  qty[type] = Math.max(1, Math.min(99, qty[type] + delta));
+  updateQtyUI(type);
+}
+function setQty(type, val) {
+  qty[type] = val;
+  updateQtyUI(type);
+  // Highlight preset
+  const selector = type === 'turns' ? '.turns-card .qty-preset' : '.lifeline-card .qty-preset';
+  document.querySelectorAll(selector).forEach(b => {
+    b.classList.toggle('active', parseInt(b.dataset.val) === val);
+  });
+}
+function updateQtyUI(type) {
+  const itemKey = type === 'turns' ? 'game_turn' : 'bonus_lifeline';
+  const total = PRICES[itemKey] * qty[type];
+  document.getElementById('qty-'+type).textContent = qty[type];
+  document.getElementById('total-'+type).textContent = total.toLocaleString('vi-VN') + 'đ';
+}
+
+// ── Payment Modal ──
+function openPayModal(itemType, qtyKey) {
+  currentOrder = {item_type: itemType, quantity: qty[qtyKey], txn_id: null, payment_ref: null};
+  const total = PRICES[itemType] * qty[qtyKey];
+
+  document.getElementById('modal-item-name').textContent = LABELS[itemType];
+  document.getElementById('modal-unit-price').textContent = PRICES[itemType].toLocaleString('vi-VN') + 'đ';
+  document.getElementById('modal-qty').textContent = qty[qtyKey] + ' lượt';
+  document.getElementById('modal-total').textContent = total.toLocaleString('vi-VN') + 'đ';
+  document.getElementById('pay-ref-box').style.display = 'none';
+  document.getElementById('webhook-info').style.display = 'none';
+  // DEV simulate button disabled in production
+  document.getElementById('btn-confirm').textContent = '▶ TẠO ĐƠN HÀNG';
+  document.getElementById('btn-confirm').disabled = false;
+  setModalStatus('', '');
+
+  document.getElementById('pay-overlay').classList.add('show');
+}
+function closePayModal() {
+  document.getElementById('pay-overlay').classList.remove('show');
+  currentOrder = null;
+}
+
+// ── Step 1: Tạo đơn hàng ──
+async function confirmOrder() {
+  if (!currentOrder) return;
+  const btn = document.getElementById('btn-confirm');
+  btn.disabled = true;
+  btn.textContent = '⏳ Đang tạo đơn...';
+  setModalStatus('', '');
+
+  try {
+    const r = await fetch('/api/shop/create-order', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({item_type: currentOrder.item_type, quantity: currentOrder.quantity})
+    });
+    const d = await r.json();
+    if (!d.success) {
+      setModalStatus('error', '❌ ' + (d.error || 'Không tạo được đơn hàng'));
+      btn.disabled = false; btn.textContent = '▶ TẠO ĐƠN HÀNG';
+      return;
+    }
+    // Lưu info đơn hàng
+    currentOrder.txn_id = d.txn_id;
+    currentOrder.payment_ref = d.payment_ref;
+
+    // Hiển thị mã đơn
+    document.getElementById('pay-ref-val').textContent = d.payment_ref;
+    document.getElementById('pay-ref-box').style.display = 'block';
+    document.getElementById('webhook-endpoint').textContent =
+      `POST /api/shop/webhook\n{\n  "payment_ref": "${d.payment_ref}",\n  "status": "paid",\n  "signature": "<HMAC-SHA256>"\n}`;
+    document.getElementById('webhook-info').style.display = 'block';
+    // DEV simulate button permanently disabled in production
+    setModalStatus('success', '✅ Đơn hàng đã tạo! Quét mã QR để chuyển khoản và hệ thống sẽ tự xác nhận.');
+    btn.textContent = '⏳ Chờ thanh toán...';
+    btn.disabled = true;
+
+    // TODO: Ở đây gọi API cổng thanh toán thực tế của bạn
+    // Ví dụ: callMomoPayment(d.payment_ref, d.total_price);
+
+  } catch(e) {
+    setModalStatus('error', '❌ Lỗi kết nối server');
+    btn.disabled = false; btn.textContent = '▶ TẠO ĐƠN HÀNG';
+  }
+}
+
+// ── Step 2 (DEV): Giả lập webhook callback ──
+// Trong production, xóa hàm này. Cổng thanh toán sẽ gọi server-to-server.
+async function simulatePaid() {
+  if (!currentOrder || !currentOrder.payment_ref) return;
+  const btn = document.getElementById('btn-simulate');
+  btn.disabled = true;
+  btn.textContent = '⏳ Đang xử lý...';
+
+  // Tạo chữ ký giả (server dùng WEBHOOK_SECRET = 'dev-secret-123' trong môi trường dev)
+  // Trong production: chữ ký do cổng thanh toán tạo ra
+  const ref = currentOrder.payment_ref;
+  const status = 'paid';
+  // Gọi server-side route để tạo signature đúng (chỉ dùng khi dev)
+  try {
+    const r = await fetch('/api/shop/webhook', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        payment_ref: ref,
+        status: status,
+        signature: await devSign(ref, status)
+      })
+    });
+    const d = await r.json();
+    if (d.success) {
+      setModalStatus('success', '🎉 Thanh toán thành công! Đã cộng lượt vào tài khoản.');
+      await loadWallet();
+      await loadHistory();
+      showToast('success', '🎉 Mua hàng thành công! Lượt đã được cộng.');
+      setTimeout(() => closePayModal(), 2000);
+    } else {
+      setModalStatus('error', '❌ ' + (d.error || 'Webhook thất bại'));
+    }
+  } catch(e) {
+    setModalStatus('error', '❌ Lỗi kết nối');
+  }
+  btn.disabled = false;
+  btn.textContent = '🧪 [DEV] Giả lập thanh toán thành công';
+}
+
+// Tạo HMAC-SHA256 phía client cho dev mode (chỉ hoạt động với secret = 'dev-secret-123')
+// ĐÂY CHỈ DÙNG ĐỂ TEST — production signature do SERVER cổng thanh toán tạo
+async function devSign(ref, status) {
+  const msg = `${ref}:${status}`;
+  const key = 'dev-secret-123';
+  const enc = new TextEncoder();
+  const cryptoKey = await crypto.subtle.importKey('raw', enc.encode(key), {name:'HMAC',hash:'SHA-256'}, false, ['sign']);
+  const sig = await crypto.subtle.sign('HMAC', cryptoKey, enc.encode(msg));
+  return Array.from(new Uint8Array(sig)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+function setModalStatus(type, msg) {
+  const el = document.getElementById('modal-status');
+  if (!type) { el.className = 'modal-status'; el.textContent = ''; return; }
+  el.className = 'modal-status show ' + type;
+  el.textContent = msg;
+}
+
+// ── Toast ──
+function showToast(type, msg) {
+  const wrap = document.getElementById('toast-wrap');
+  const t = document.createElement('div');
+  t.className = 'toast ' + type;
+  t.textContent = msg;
+  wrap.appendChild(t);
+  setTimeout(() => t.remove(), 4200);
+}
+
+// ── Init ──
+(async function init() {
+  // Kiểm tra đăng nhập
+  const me = await fetch('/api/auth/me').then(r => r.json());
+  if (!me.logged_in) { window.location.href = '/auth'; return; }
+
+  await loadWallet();
+  await loadHistory();
+
+  // Khởi tạo tổng mặc định
+  updateQtyUI('turns');
+  updateQtyUI('lifelines');
+})();
+</script>
+</body>
+</html>

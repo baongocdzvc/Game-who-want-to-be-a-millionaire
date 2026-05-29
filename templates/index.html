@@ -1,235 +1,1901 @@
 <!DOCTYPE html>
 <html lang="vi">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <meta name="description" content="Game Ai Là Triệu Phú - Trò chơi trí tuệ hấp dẫn">
-    <meta name="theme-color" content="#1a0a3e">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>🎯 Ai Là Triệu Phú</title>
-    <link rel="stylesheet" href="/static/css/style.css">
-    <link rel="manifest" href="/manifest.json">
-    <link
-        href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;500;600;700&display=swap"
-        rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0D0D1A">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>🎯 Ai Là Triệu Phú</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&family=DM+Sans:wght@400;500;700&family=Bungee&display=swap" rel="stylesheet">
+<link rel="manifest" href="/manifest.json">
+<style>
+:root {
+  --bg: #0D0D1A;
+  --fg: #FFFFFF;
+  --muted: #2D1B4E;
+  --accent: #FF3AF2;
+  --cyan: #00F5D4;
+  --yellow: #FFE600;
+  --orange: #FF6B35;
+  --purple: #7B2FFF;
+  --correct: #00F5D4;
+  --wrong: #FF3AF2;
+  --selected: #FFE600;
+}
+
+*{margin:0;padding:0;box-sizing:border-box;}
+
+body{
+  font-family:'DM Sans',sans-serif;
+  background:var(--bg);
+  color:var(--fg);
+  min-height:100vh;
+  overflow-x:hidden;
+  position:relative;
+}
+
+/* ── GLOBAL PATTERNS ── */
+body::before{
+  content:'';
+  position:fixed;inset:0;
+  background-image:radial-gradient(circle,rgba(255,58,242,0.8) 1px,transparent 1px);
+  background-size:28px 28px;
+  opacity:.06;
+  pointer-events:none;
+  z-index:0;
+}
+body::after{
+  content:'';
+  position:fixed;inset:0;
+  background-image:repeating-linear-gradient(45deg,transparent,transparent 14px,rgba(0,245,212,.05) 14px,rgba(0,245,212,.05) 28px);
+  pointer-events:none;
+  z-index:0;
+}
+
+/* ── SCREENS ── */
+.screen{display:none;min-height:100vh;position:relative;z-index:1;}
+.screen.active{display:flex;flex-direction:column;align-items:center;justify-content:center;animation:screenIn .5s cubic-bezier(.68,-.55,.265,1.55);}
+/* Shop screen overrides — top-aligned + scrollable */
+#shop-screen.active{justify-content:flex-start;overflow-y:auto;}
+@keyframes screenIn{from{opacity:0;transform:scale(.95) translateY(30px)}to{opacity:1;transform:scale(1) translateY(0)}}
+
+/* ═══════════════════════════════════
+   WELCOME SCREEN
+═══════════════════════════════════ */
+#welcome-screen{justify-content:flex-start;padding:40px 20px;}
+
+.welcome-inner{
+  width:100%;max-width:800px;
+  text-align:center;
+  position:relative;
+}
+
+/* BIG BG TEXT */
+.bg-text{
+  position:absolute;
+  font-family:'Bungee',cursive;
+  font-size:clamp(80px,18vw,180px);
+  font-weight:900;
+  color:rgba(255,58,242,.07);
+  top:-20px;left:50%;
+  transform:translateX(-50%);
+  white-space:nowrap;
+  pointer-events:none;
+  z-index:0;
+  letter-spacing:-5px;
+}
+
+/* TITLE */
+.logo-wrap{position:relative;z-index:1;margin-bottom:36px;}
+
+.title-who{
+  display:block;
+  font-family:'DM Sans',sans-serif;
+  font-size:clamp(.9rem,2.5vw,1.2rem);
+  font-weight:700;
+  letter-spacing:12px;
+  color:var(--cyan);
+  text-transform:uppercase;
+  margin-bottom:8px;
+  text-shadow:0 0 20px rgba(0,245,212,.5);
+}
+
+.title-main{
+  display:block;
+  font-family:'Outfit',sans-serif;
+  font-size:clamp(2.8rem,9vw,7rem);
+  font-weight:900;
+  line-height:.95;
+  text-transform:uppercase;
+  background:linear-gradient(90deg,#FF3AF2,#FFE600,#00F5D4,#FF6B35,#FF3AF2);
+  background-size:300%;
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  background-clip:text;
+  animation:gradShift 4s ease infinite;
+  text-shadow:none;
+  filter:drop-shadow(0 0 30px rgba(255,58,242,.4));
+}
+@keyframes gradShift{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+
+.title-sub{
+  display:block;
+  font-family:'DM Sans',sans-serif;
+  font-size:clamp(.75rem,2vw,1rem);
+  font-weight:500;
+  color:rgba(255,255,255,.5);
+  letter-spacing:4px;
+  margin-top:12px;
+  text-transform:uppercase;
+}
+
+/* FLOATING DECORATIONS */
+.deco{
+  position:absolute;
+  pointer-events:none;
+  z-index:0;
+}
+.deco-star{font-size:clamp(24px,5vw,48px);animation:floatDeco 6s ease-in-out infinite;}
+.deco-star:nth-child(2){animation-delay:1s;animation-duration:5s;}
+.deco-star:nth-child(3){animation-delay:2s;animation-duration:7s;}
+.deco-star:nth-child(4){animation-delay:.5s;}
+.deco-star:nth-child(5){animation-delay:3s;animation-duration:8s;}
+@keyframes floatDeco{0%,100%{transform:translateY(0) rotate(0deg)}50%{transform:translateY(-20px) rotate(15deg)}}
+
+/* WELCOME BOX */
+.welcome-box{
+  position:relative;z-index:1;
+  background:rgba(45,27,78,.85);
+  border:4px solid var(--yellow);
+  border-radius:28px;
+  padding:36px 40px;
+  box-shadow:8px 8px 0 var(--accent),16px 16px 0 var(--purple),
+             0 0 60px rgba(255,230,0,.15),0 0 30px rgba(255,58,242,.1);
+  margin-bottom:24px;
+  backdrop-filter:blur(10px);
+}
+.welcome-box::before{
+  content:'';
+  position:absolute;inset:0;border-radius:24px;
+  background-image:radial-gradient(circle at 30% 20%,rgba(0,245,212,.08) 0%,transparent 50%),
+                    radial-gradient(circle at 70% 80%,rgba(255,58,242,.08) 0%,transparent 50%);
+  pointer-events:none;
+}
+
+.welcome-label{
+  font-family:'Outfit',sans-serif;
+  font-size:clamp(1.1rem,3vw,1.6rem);
+  font-weight:900;
+  color:var(--yellow);
+  text-shadow:2px 2px 0 var(--purple),4px 4px 0 var(--accent);
+  margin-bottom:24px;
+  display:block;
+  text-transform:uppercase;
+  letter-spacing:1px;
+}
+
+/* START BUTTON */
+.btn-start{
+  display:inline-flex;align-items:center;gap:12px;
+  padding:18px 52px;
+  font-family:'Outfit',sans-serif;
+  font-size:1.2rem;
+  font-weight:900;
+  letter-spacing:3px;
+  text-transform:uppercase;
+  color:#000;
+  background:linear-gradient(135deg,var(--yellow),var(--orange),var(--accent));
+  background-size:200%;
+  border:4px solid var(--cyan);
+  border-radius:9999px;
+  cursor:pointer;
+  transition:all .3s cubic-bezier(.68,-.55,.265,1.55);
+  box-shadow:0 0 30px rgba(255,230,0,.4),8px 8px 0 var(--purple),16px 16px 0 rgba(123,47,255,.4);
+  position:relative;overflow:hidden;
+  animation:pulseGlow 2s ease-in-out infinite;
+  margin-bottom:28px;
+}
+@keyframes pulseGlow{0%,100%{box-shadow:0 0 20px rgba(255,230,0,.4),8px 8px 0 var(--purple)}50%{box-shadow:0 0 50px rgba(255,230,0,.7),8px 8px 0 var(--purple),0 0 80px rgba(255,58,242,.3)}}
+.btn-start:hover{transform:scale(1.1) rotate(-1deg);box-shadow:0 0 60px rgba(255,230,0,.6),12px 12px 0 var(--purple),24px 24px 0 rgba(123,47,255,.5);}
+.btn-start:active{transform:scale(.97);box-shadow:4px 4px 0 var(--purple);}
+
+/* RULES */
+.rules-box{
+  background:rgba(255,255,255,.04);
+  border:4px dashed var(--cyan);
+  border-radius:20px;
+  padding:24px 28px;
+  text-align:left;
+  margin-bottom:24px;
+  box-shadow:0 0 20px rgba(0,245,212,.1);
+}
+.rules-title{
+  font-family:'Outfit',sans-serif;font-size:1rem;font-weight:900;
+  color:var(--cyan);letter-spacing:3px;text-transform:uppercase;
+  margin-bottom:16px;display:flex;align-items:center;gap:10px;
+  text-shadow:0 0 15px rgba(0,245,212,.5);
+}
+.rules-list{list-style:none;display:flex;flex-direction:column;gap:10px;}
+.rules-list li{
+  display:flex;align-items:flex-start;gap:12px;
+  font-size:.95rem;color:rgba(255,255,255,.8);line-height:1.5;
+}
+.rule-badge{
+  min-width:28px;height:28px;border-radius:6px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:1rem;flex-shrink:0;margin-top:-2px;
+}
+
+/* HISTORY */
+.history-block{
+  background:rgba(45,27,78,.6);
+  border:4px solid var(--purple);
+  border-radius:20px;
+  padding:20px 24px;
+  box-shadow:6px 6px 0 rgba(255,58,242,.3);
+}
+.history-title{
+  font-family:'Outfit',sans-serif;font-size:.85rem;font-weight:900;
+  color:var(--purple);letter-spacing:3px;text-transform:uppercase;
+  margin-bottom:14px;
+  text-shadow:0 0 15px rgba(123,47,255,.5);
+}
+.history-scroll{display:flex;flex-direction:column;gap:8px;max-height:220px;overflow-y:auto;}
+.history-item{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:10px 16px;border-radius:12px;
+  border-left:4px solid #888;
+  background:rgba(0,0,0,.3);
+  transition:.2s;
+}
+.history-item:hover{background:rgba(255,255,255,.06);}
+.history-item.win{border-left-color:var(--cyan);}
+.history-item.loss{border-left-color:var(--accent);}
+.h-main{display:flex;flex-direction:column;gap:3px;}
+.h-result{font-size:.8rem;font-weight:700;letter-spacing:1px;}
+.history-item.win .h-result{color:var(--cyan);}
+.history-item.loss .h-result{color:var(--accent);}
+.h-prize{font-size:1rem;color:var(--yellow);font-weight:700;}
+.h-meta{font-size:.78rem;color:rgba(255,255,255,.45);text-align:right;display:flex;flex-direction:column;gap:2px;}
+
+/* ═══════════════════════════════════
+   GAME SCREEN
+═══════════════════════════════════ */
+#game-screen.active{justify-content:flex-start;padding:0;}
+
+/* TOP BAR */
+.top-bar{
+  width:100%;padding:12px 20px;
+  display:flex;justify-content:space-between;align-items:center;
+  background:rgba(13,13,26,.9);
+  border-bottom:4px solid var(--accent);
+  backdrop-filter:blur(12px);
+  position:sticky;top:0;z-index:20;
+  box-shadow:0 4px 0 var(--purple),0 8px 30px rgba(255,58,242,.2);
+}
+
+.player-chip{
+  display:flex;align-items:center;gap:8px;
+  background:rgba(255,58,242,.12);
+  border:3px solid var(--accent);
+  border-radius:9999px;
+  padding:6px 14px;
+  font-family:'Outfit',sans-serif;
+  font-size:.9rem;font-weight:700;
+  color:var(--accent);
+  text-shadow:0 0 10px rgba(255,58,242,.4);
+}
+.player-chip .emoji{font-size:1.2rem;}
+
+.btn-logout{
+  background:rgba(255,107,53,.1);
+  border:2px dashed var(--orange);
+  border-radius:9999px;padding:5px 14px;
+  color:var(--orange);font-size:.8rem;font-weight:700;
+  cursor:pointer;transition:.3s;
+  font-family:'DM Sans',sans-serif;letter-spacing:1px;text-transform:uppercase;
+}
+.btn-logout:hover{background:rgba(255,107,53,.25);}
+
+/* TIMER */
+.timer-wrap{position:relative;}
+.timer-ring{width:60px;height:60px;position:relative;}
+.timer-ring svg{width:100%;height:100%;transform:rotate(-90deg);}
+.timer-bg{fill:none;stroke:rgba(255,255,255,.1);stroke-width:5;}
+.timer-progress{fill:none;stroke:var(--yellow);stroke-width:5;stroke-linecap:round;stroke-dasharray:157;stroke-dashoffset:0;transition:stroke-dashoffset 1s linear,stroke .3s;}
+.timer-progress.warn{stroke:var(--orange);}
+.timer-progress.danger{stroke:var(--accent);animation:timerDanger .5s ease-in-out infinite;}
+@keyframes timerDanger{0%,100%{opacity:1}50%{opacity:.4}}
+.timer-text{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-family:'Outfit',sans-serif;font-size:1.2rem;font-weight:900;color:#fff;}
+
+.prize-chip{
+  display:flex;align-items:center;gap:8px;
+  background:rgba(255,230,0,.12);
+  border:3px solid var(--yellow);
+  border-radius:9999px;padding:6px 18px;
+  font-family:'Outfit',sans-serif;font-size:.95rem;font-weight:900;
+  color:var(--yellow);
+  text-shadow:0 0 15px rgba(255,230,0,.4);
+  box-shadow:0 0 20px rgba(255,230,0,.15);
+}
+
+/* GAME MAIN */
+.game-main{
+  display:flex;width:100%;flex:1;
+  padding:16px;gap:14px;
+  max-width:1300px;margin:0 auto;
+}
+
+/* QUESTION AREA */
+.question-area{flex:1;display:flex;flex-direction:column;gap:14px;}
+
+.q-header{display:flex;justify-content:space-between;align-items:center;}
+
+.q-num-badge{
+  font-family:'Bungee',cursive;
+  font-size:1rem;color:var(--yellow);
+  background:rgba(255,230,0,.1);
+  border:3px solid var(--yellow);
+  border-radius:12px;padding:6px 16px;
+  text-shadow:0 0 10px rgba(255,230,0,.4);
+  box-shadow:3px 3px 0 var(--orange);
+}
+
+.btn-translate{
+  display:flex;align-items:center;gap:6px;
+  background:rgba(0,245,212,.08);
+  border:3px solid var(--cyan);
+  border-radius:9999px;padding:6px 14px;
+  color:var(--cyan);font-size:.82rem;font-weight:700;
+  cursor:pointer;transition:.3s;
+  font-family:'DM Sans',sans-serif;letter-spacing:1px;text-transform:uppercase;
+}
+.btn-translate:hover{background:rgba(0,245,212,.2);box-shadow:0 0 15px rgba(0,245,212,.3);}
+
+/* QUESTION BOX */
+.question-box{
+  background:linear-gradient(135deg,rgba(45,27,78,.95),rgba(15,52,96,.9));
+  border:4px solid var(--accent);
+  border-radius:24px;
+  padding:28px 36px;
+  text-align:center;
+  min-height:110px;
+  display:flex;align-items:center;justify-content:center;
+  position:relative;overflow:hidden;
+  box-shadow:8px 8px 0 var(--purple),0 0 40px rgba(255,58,242,.15);
+}
+.question-box::before{
+  content:'';
+  position:absolute;inset:0;
+  background:repeating-linear-gradient(90deg,transparent,transparent 60px,rgba(255,230,0,.03) 60px,rgba(255,230,0,.03) 61px);
+  pointer-events:none;
+}
+.question-box::after{
+  content:'?';
+  position:absolute;right:-20px;top:50%;transform:translateY(-50%);
+  font-family:'Bungee',cursive;font-size:120px;color:rgba(255,58,242,.06);
+  pointer-events:none;line-height:1;
+}
+#question-text{
+  font-family:'Outfit',sans-serif;
+  font-size:clamp(1rem,2.5vw,1.3rem);
+  font-weight:700;line-height:1.5;
+  z-index:1;position:relative;
+  text-shadow:0 0 30px rgba(255,58,242,.1);
+}
+
+/* ANSWER GRID */
+.answers-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+
+.answer-btn{
+  display:flex;align-items:center;gap:14px;
+  padding:16px 22px;
+  border:4px solid rgba(255,255,255,.12);
+  border-radius:16px;
+  background:linear-gradient(135deg,rgba(45,27,78,.8),rgba(15,52,96,.6));
+  color:#fff;
+  font-family:'DM Sans',sans-serif;font-size:1rem;font-weight:500;
+  cursor:pointer;
+  transition:all .25s cubic-bezier(.68,-.55,.265,1.55);
+  text-align:left;
+  position:relative;overflow:hidden;
+  box-shadow:4px 4px 0 rgba(123,47,255,.3);
+}
+.answer-btn::before{
+  content:'';position:absolute;inset:0;opacity:0;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.05),transparent);
+  transition:.3s;
+}
+.answer-btn:hover:not(.disabled):not(.correct):not(.wrong){
+  border-color:var(--yellow);
+  background:linear-gradient(135deg,rgba(255,230,0,.12),rgba(255,107,53,.08));
+  transform:translateX(6px) rotate(.5deg);
+  box-shadow:8px 8px 0 var(--orange),0 0 25px rgba(255,230,0,.2);
+}
+.answer-btn:hover::before{opacity:1;}
+
+.ans-letter{
+  width:38px;height:38px;flex-shrink:0;border-radius:10px;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Bungee',cursive;font-size:1rem;
+  background:linear-gradient(135deg,var(--yellow),var(--orange));
+  color:#000;
+  box-shadow:2px 2px 0 rgba(0,0,0,.3);
+  transition:.25s;
+}
+.ans-text{flex:1;font-size:.95rem;line-height:1.4;}
+
+.answer-btn.selected{
+  border-color:var(--cyan);
+  background:linear-gradient(135deg,rgba(0,245,212,.2),rgba(0,245,212,.08));
+  box-shadow:8px 8px 0 rgba(0,245,212,.4),0 0 30px rgba(0,245,212,.2);
+  animation:selectedPulse 1s ease-in-out infinite;
+}
+@keyframes selectedPulse{0%,100%{box-shadow:8px 8px 0 rgba(0,245,212,.4)}50%{box-shadow:12px 12px 0 rgba(0,245,212,.6),0 0 40px rgba(0,245,212,.3)}}
+.answer-btn.selected .ans-letter{background:linear-gradient(135deg,var(--cyan),#00c4aa);}
+
+.answer-btn.correct{
+  border-color:var(--cyan);
+  background:linear-gradient(135deg,rgba(0,245,212,.3),rgba(0,245,212,.12));
+  box-shadow:8px 8px 0 rgba(0,245,212,.5),0 0 40px rgba(0,245,212,.3);
+  animation:correctFlash .4s ease-in-out 4;
+}
+@keyframes correctFlash{0%,100%{opacity:1}50%{opacity:.6}}
+.answer-btn.correct .ans-letter{background:linear-gradient(135deg,var(--cyan),#00c4aa);}
+
+.answer-btn.wrong{
+  border-color:var(--accent);
+  background:linear-gradient(135deg,rgba(255,58,242,.2),rgba(255,58,242,.08));
+  box-shadow:8px 8px 0 rgba(255,58,242,.3);
+}
+.answer-btn.wrong .ans-letter{background:linear-gradient(135deg,var(--accent),#c42abf);}
+
+.answer-btn.disabled{opacity:.2;cursor:not-allowed;pointer-events:none;}
+
+/* ── SIDEBAR ── */
+.sidebar{width:270px;flex-shrink:0;display:flex;flex-direction:column;gap:12px;}
+
+.sidebar-card{
+  background:rgba(45,27,78,.7);
+  border-radius:18px;
+  padding:16px;
+  border:4px solid;
+  backdrop-filter:blur(8px);
+}
+.sidebar-card.lifelines-card{
+  border-color:var(--purple);
+  box-shadow:6px 6px 0 rgba(123,47,255,.4);
+}
+.sidebar-card.ladder-card{
+  border-color:var(--yellow);
+  box-shadow:6px 6px 0 rgba(255,230,0,.3);
+  flex:1;overflow:hidden;display:flex;flex-direction:column;
+}
+.sidebar-card.stop-card{border-color:var(--accent);box-shadow:6px 6px 0 rgba(255,58,242,.3);}
+
+.card-title{
+  font-family:'Bungee',cursive;font-size:.8rem;color:inherit;
+  letter-spacing:3px;text-transform:uppercase;margin-bottom:12px;
+  display:flex;align-items:center;gap:8px;
+}
+.lifelines-card .card-title{color:var(--purple);text-shadow:0 0 10px rgba(123,47,255,.5);}
+.ladder-card .card-title{color:var(--yellow);text-shadow:0 0 10px rgba(255,230,0,.5);}
+
+.lifeline-row{display:flex;gap:8px;}
+
+.lifeline-btn{
+  flex:1;padding:10px 6px;
+  border:3px solid var(--purple);
+  border-radius:12px;
+  background:rgba(123,47,255,.1);
+  color:var(--purple);
+  display:flex;flex-direction:column;align-items:center;gap:5px;
+  cursor:pointer;
+  transition:all .25s cubic-bezier(.68,-.55,.265,1.55);
+  font-size:.72rem;font-weight:700;font-family:'DM Sans',sans-serif;
+  letter-spacing:1px;text-transform:uppercase;
+}
+.lifeline-btn .li-icon{font-size:1.4rem;}
+.lifeline-btn:hover:not(.used){
+  background:rgba(123,47,255,.3);
+  transform:translateY(-4px) rotate(-1deg);
+  box-shadow:0 8px 20px rgba(123,47,255,.4);
+}
+.lifeline-btn.used{opacity:.25;cursor:not-allowed;text-decoration:line-through;filter:grayscale(.8);}
+
+/* MONEY LADDER */
+.ladder-scroll{flex:1;overflow-y:auto;}
+.money-list{list-style:none;display:flex;flex-direction:column-reverse;}
+.money-list li{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:5px 10px;border-radius:8px;
+  font-size:.78rem;color:rgba(255,255,255,.45);
+  transition:.2s;
+}
+.money-list li.current{
+  background:linear-gradient(90deg,rgba(255,230,0,.15),transparent);
+  color:var(--yellow);font-weight:700;
+  border:2px solid rgba(255,230,0,.3);
+  border-radius:8px;
+  animation:ladderPulse 2s ease-in-out infinite;
+}
+@keyframes ladderPulse{0%,100%{box-shadow:0 0 8px rgba(255,230,0,.1)}50%{box-shadow:0 0 20px rgba(255,230,0,.3)}}
+.money-list li.passed{color:rgba(0,245,212,.7);}
+.money-list li.milestone{color:var(--yellow);font-weight:700;border-left:3px solid var(--yellow);padding-left:8px;}
+.lv-num{font-weight:700;min-width:28px;font-family:'Outfit',sans-serif;}
+
+/* STOP BUTTON */
+.btn-stop{
+  width:100%;padding:12px;
+  border:none;border-radius:12px;
+  background:linear-gradient(135deg,rgba(255,58,242,.15),rgba(255,58,242,.08));
+  color:var(--accent);
+  font-family:'Outfit',sans-serif;font-size:.9rem;font-weight:900;
+  letter-spacing:2px;text-transform:uppercase;
+  cursor:pointer;transition:.3s;
+}
+.btn-stop:hover{background:linear-gradient(135deg,rgba(255,58,242,.3),rgba(255,58,242,.15));box-shadow:0 0 20px rgba(255,58,242,.3);}
+
+/* ═══════════════════════════════════
+   MODAL
+═══════════════════════════════════ */
+.modal-overlay{
+  display:none;position:fixed;inset:0;
+  background:rgba(13,13,26,.85);
+  backdrop-filter:blur(8px);
+  z-index:100;justify-content:center;align-items:center;
+}
+.modal-overlay.active{display:flex;animation:screenIn .3s ease;}
+
+.modal{
+  background:linear-gradient(135deg,#1a0a3e,#0f3460);
+  border:4px solid var(--accent);
+  border-radius:24px;
+  padding:28px 32px;
+  max-width:480px;width:90%;
+  box-shadow:8px 8px 0 var(--yellow),16px 16px 0 var(--purple);
+  position:relative;overflow:hidden;
+}
+.modal::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse at 20% 20%,rgba(255,58,242,.08) 0%,transparent 50%),
+              radial-gradient(ellipse at 80% 80%,rgba(0,245,212,.08) 0%,transparent 50%);
+  pointer-events:none;
+}
+.modal-header{
+  display:flex;justify-content:space-between;align-items:center;
+  margin-bottom:20px;
+}
+.modal-title-text{
+  font-family:'Bungee',cursive;font-size:1.1rem;
+  color:var(--yellow);letter-spacing:2px;
+  text-shadow:2px 2px 0 var(--accent);
+}
+.modal-close{
+  background:rgba(255,58,242,.15);border:2px solid var(--accent);
+  border-radius:8px;width:32px;height:32px;
+  display:flex;align-items:center;justify-content:center;
+  color:var(--accent);font-size:1rem;cursor:pointer;
+  transition:.2s;font-family:'Outfit',sans-serif;font-weight:900;
+}
+.modal-close:hover{background:rgba(255,58,242,.3);}
+.modal-body{margin-bottom:20px;position:relative;z-index:1;}
+
+.btn-modal-ok{
+  width:100%;padding:14px;
+  font-family:'Outfit',sans-serif;font-size:1rem;font-weight:900;
+  letter-spacing:3px;text-transform:uppercase;
+  color:#000;
+  background:linear-gradient(135deg,var(--yellow),var(--orange));
+  border:none;border-radius:9999px;cursor:pointer;
+  transition:.3s cubic-bezier(.68,-.55,.265,1.55);
+  position:relative;z-index:1;
+  box-shadow:4px 4px 0 var(--purple);
+}
+.btn-modal-ok:hover{transform:scale(1.05);box-shadow:8px 8px 0 var(--purple);}
+
+/* Audience chart */
+.audience-chart{display:flex;justify-content:center;align-items:flex-end;gap:18px;height:180px;padding:16px 0;}
+.aud-bar{display:flex;flex-direction:column;align-items:center;gap:6px;width:55px;}
+.bar{width:100%;border-radius:8px 8px 0 0;background:linear-gradient(to top,var(--purple),var(--accent));transition:height 1s ease;position:relative;}
+.bar-pct{position:absolute;top:-22px;left:50%;transform:translateX(-50%);font-family:'Outfit',sans-serif;font-weight:900;font-size:.85rem;color:var(--yellow);}
+.bar-lbl{font-family:'Bungee',cursive;font-size:.85rem;color:rgba(255,255,255,.6);}
+
+/* Phone result */
+.phone-result{text-align:center;padding:16px;}
+.phone-icon{font-size:3rem;margin-bottom:14px;display:block;animation:phoneRing .4s ease-in-out 3;}
+@keyframes phoneRing{0%,100%{transform:rotate(0)}25%{transform:rotate(20deg)}75%{transform:rotate(-20deg)}}
+.phone-text{font-size:1rem;color:rgba(255,255,255,.8);line-height:1.7;}
+.phone-answer{color:var(--cyan);font-family:'Outfit',sans-serif;font-weight:900;font-size:1.3rem;margin-top:10px;text-shadow:0 0 20px rgba(0,245,212,.5);}
+
+/* 50/50 result */
+.fifty-result{text-align:center;padding:16px;}
+.fifty-icon{font-size:2.5rem;margin-bottom:12px;display:block;}
+.fifty-text{color:rgba(255,255,255,.8);font-size:1rem;line-height:1.6;}
+.fifty-removed{display:flex;justify-content:center;gap:12px;margin-top:14px;flex-wrap:wrap;}
+.removed-answer{padding:8px 20px;background:rgba(255,58,242,.1);border:2px solid var(--accent);border-radius:10px;color:var(--accent);text-decoration:line-through;font-weight:700;font-family:'Outfit',sans-serif;}
+
+/* ═══════════════════════════════════
+   RESULT SCREEN
+═══════════════════════════════════ */
+#result-screen.active{position:relative;overflow:hidden;}
+#result-screen::before{
+  content:'';position:fixed;inset:0;
+  background:radial-gradient(ellipse at 50% 40%,rgba(255,230,0,.1) 0%,transparent 60%),
+              radial-gradient(ellipse at 20% 80%,rgba(255,58,242,.1) 0%,transparent 50%),
+              radial-gradient(ellipse at 80% 20%,rgba(0,245,212,.08) 0%,transparent 50%);
+  pointer-events:none;
+}
+
+.result-content{
+  text-align:center;padding:40px 24px;
+  max-width:600px;width:100%;
+  position:relative;z-index:1;
+}
+
+.result-icon{
+  font-size:6rem;margin-bottom:20px;display:block;
+  animation:resultBounce 1s cubic-bezier(.68,-.55,.265,1.55) infinite;
+  filter:drop-shadow(0 0 30px rgba(255,230,0,.5));
+}
+@keyframes resultBounce{0%,100%{transform:translateY(0) rotate(0deg)}50%{transform:translateY(-20px) rotate(8deg)}}
+
+.result-title{
+  font-family:'Outfit',sans-serif;font-size:clamp(2rem,7vw,4.5rem);
+  font-weight:900;line-height:1;text-transform:uppercase;
+  background:linear-gradient(90deg,var(--yellow),var(--orange),var(--accent),var(--yellow));
+  background-size:200%;
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  animation:gradShift 3s ease infinite;
+  margin-bottom:24px;
+}
+
+.result-prize-box{
+  background:rgba(255,230,0,.08);
+  border:4px solid var(--yellow);
+  border-radius:24px;padding:24px;
+  margin:20px 0;
+  box-shadow:8px 8px 0 var(--orange),16px 16px 0 rgba(255,107,53,.3);
+}
+.prize-label-r{font-size:.85rem;color:rgba(255,255,255,.55);display:block;margin-bottom:8px;letter-spacing:2px;text-transform:uppercase;font-weight:700;}
+.prize-amount{
+  font-family:'Bungee',cursive;font-size:clamp(1.8rem,6vw,3.5rem);
+  color:var(--yellow);
+  text-shadow:3px 3px 0 var(--orange),6px 6px 0 rgba(255,58,242,.4);
+}
+
+.result-stats{display:flex;justify-content:center;gap:36px;margin:24px 0;flex-wrap:wrap;}
+.rstat{display:flex;flex-direction:column;align-items:center;gap:4px;}
+.rstat-icon{font-size:1.6rem;}
+.rstat-val{font-family:'Outfit',sans-serif;font-size:2rem;font-weight:900;color:var(--cyan);}
+.rstat-lbl{font-size:.78rem;color:rgba(255,255,255,.5);letter-spacing:1px;text-transform:uppercase;}
+
+.btn-replay{
+  display:inline-flex;align-items:center;gap:10px;
+  padding:16px 44px;
+  font-family:'Outfit',sans-serif;font-size:1.1rem;font-weight:900;
+  letter-spacing:3px;text-transform:uppercase;
+  color:#000;
+  background:linear-gradient(135deg,var(--cyan),#00c4aa);
+  border:4px solid var(--yellow);border-radius:9999px;
+  cursor:pointer;transition:all .3s cubic-bezier(.68,-.55,.265,1.55);
+  box-shadow:8px 8px 0 var(--purple);
+  margin-top:10px;
+}
+.btn-replay:hover{transform:scale(1.08) rotate(-1deg);box-shadow:12px 12px 0 var(--purple);}
+
+/* ═══════════════════════════════════
+   CHATBOT
+═══════════════════════════════════ */
+.chatbot-toggle{
+  position:fixed;bottom:28px;right:28px;
+  width:58px;height:58px;border-radius:50%;
+  background:linear-gradient(135deg,var(--accent),var(--purple));
+  border:4px solid var(--yellow);
+  color:#fff;font-size:1.4rem;cursor:pointer;
+  z-index:99;transition:all .3s cubic-bezier(.68,-.55,.265,1.55);
+  box-shadow:4px 4px 0 var(--yellow),0 0 30px rgba(255,58,242,.4);
+  display:flex;align-items:center;justify-content:center;
+  animation:pulseGlow 3s ease-in-out infinite;
+}
+.chatbot-toggle:hover{transform:scale(1.15) rotate(15deg);}
+
+.chat-badge{
+  position:absolute;top:-6px;right:-6px;
+  width:22px;height:22px;border-radius:50%;
+  background:var(--yellow);border:2px solid var(--bg);
+  font-size:.7rem;font-weight:900;color:#000;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Outfit',sans-serif;
+  animation:badgePop .5s cubic-bezier(.68,-.55,.265,1.55) infinite alternate;
+}
+@keyframes badgePop{from{transform:scale(1)}to{transform:scale(1.2)}}
+
+.chatbot-window{
+  position:fixed;bottom:100px;right:28px;
+  width:360px;height:480px;
+  background:linear-gradient(180deg,#1a0a3e,#0D0D1A);
+  border:4px solid var(--accent);
+  border-radius:24px;
+  display:none;flex-direction:column;
+  z-index:100;overflow:hidden;
+  box-shadow:8px 8px 0 var(--purple),0 20px 60px rgba(255,58,242,.2);
+}
+.chatbot-window.active{display:flex;animation:screenIn .3s ease;}
+
+.chatbot-header{
+  padding:14px 18px;
+  background:rgba(255,58,242,.1);
+  border-bottom:3px solid var(--accent);
+  display:flex;justify-content:space-between;align-items:center;
+}
+.chat-info{display:flex;align-items:center;gap:10px;}
+.chat-avatar{font-size:1.6rem;}
+.chat-info h4{font-family:'Outfit',sans-serif;font-size:.9rem;font-weight:900;color:var(--accent);}
+.chat-status{font-size:.7rem;color:var(--cyan);}
+.chat-close-btn{background:rgba(255,58,242,.15);border:2px solid var(--accent);border-radius:6px;width:28px;height:28px;color:var(--accent);cursor:pointer;font-size:.9rem;display:flex;align-items:center;justify-content:center;font-weight:900;transition:.2s;}
+.chat-close-btn:hover{background:rgba(255,58,242,.3);}
+
+.chat-messages{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:8px;}
+
+.chat-msg{
+  max-width:85%;padding:9px 14px;border-radius:14px;
+  font-size:.88rem;line-height:1.5;animation:msgIn .25s ease;
+}
+@keyframes msgIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.chat-msg.bot{background:rgba(255,58,242,.1);border:2px solid rgba(255,58,242,.2);align-self:flex-start;border-bottom-left-radius:4px;}
+.chat-msg.user{background:linear-gradient(135deg,rgba(0,245,212,.2),rgba(0,245,212,.08));border:2px solid rgba(0,245,212,.2);align-self:flex-end;border-bottom-right-radius:4px;}
+
+.typing-ind{display:flex;gap:4px;padding:10px 14px;align-self:flex-start;}
+.typing-ind span{width:7px;height:7px;background:var(--accent);border-radius:50%;animation:typingDot 1.4s ease-in-out infinite;}
+.typing-ind span:nth-child(2){animation-delay:.2s;}
+.typing-ind span:nth-child(3){animation-delay:.4s;}
+@keyframes typingDot{0%,100%{transform:translateY(0);opacity:.3}50%{transform:translateY(-5px);opacity:1}}
+
+.chat-input-row{
+  padding:10px 12px;
+  display:flex;gap:8px;
+  border-top:3px solid rgba(255,58,242,.2);
+  background:rgba(0,0,0,.2);
+}
+.chat-input-row input{
+  flex:1;padding:9px 14px;
+  border:2px solid rgba(255,58,242,.25);
+  border-radius:9999px;
+  background:rgba(255,255,255,.05);
+  color:#fff;font-size:.88rem;outline:none;
+  font-family:'DM Sans',sans-serif;
+  transition:.3s;
+}
+.chat-input-row input:focus{border-color:var(--accent);box-shadow:0 0 15px rgba(255,58,242,.2);}
+.chat-input-row button{
+  width:36px;height:36px;border-radius:50%;
+  background:linear-gradient(135deg,var(--accent),var(--purple));
+  border:none;color:#fff;font-size:.9rem;cursor:pointer;
+  transition:.3s;display:flex;align-items:center;justify-content:center;
+}
+.chat-input-row button:hover{transform:scale(1.1);}
+
+/* ── SOUND BTN ── */
+.sound-btn{
+  position:fixed;bottom:28px;left:28px;
+  width:42px;height:42px;border-radius:50%;
+  background:rgba(255,255,255,.08);border:2px solid rgba(255,255,255,.2);
+  color:#fff;font-size:.9rem;cursor:pointer;z-index:99;
+  transition:.3s;display:flex;align-items:center;justify-content:center;
+}
+.sound-btn:hover{background:rgba(255,255,255,.18);}
+
+/* ── CONFETTI ── */
+.confetti-piece{
+  position:fixed;width:10px;height:10px;z-index:9999;
+  animation:confettiFall 3s ease-in-out forwards;
+  pointer-events:none;
+}
+@keyframes confettiFall{0%{transform:translateY(-100vh) rotate(0deg);opacity:1}100%{transform:translateY(100vh) rotate(720deg);opacity:0}}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar{width:5px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:rgba(255,58,242,.3);border-radius:3px;}
+
+/* ── RESPONSIVE ── */
+@media(max-width:900px){
+  .game-main{flex-direction:column;}
+  .sidebar{width:100%;flex-direction:row;flex-wrap:wrap;}
+  .lifelines-card,.stop-card{flex:none;width:100%;}
+  .ladder-card{flex:1;min-width:180px;max-height:200px;}
+}
+@media(max-width:600px){
+  .answers-grid{grid-template-columns:1fr;}
+  .top-bar{flex-wrap:wrap;gap:8px;justify-content:center;padding:10px;}
+  .chatbot-window{width:calc(100% - 16px);right:8px;bottom:75px;height:400px;}
+  .welcome-box{padding:24px 20px;}
+  .btn-start{padding:14px 36px;}
+}
+
+/* ── SHOP KEYFRAMES ── */
+@keyframes gs{0%,100%{background-position:0%}50%{background-position:100%}}
+@keyframes iconWig{0%,100%{transform:rotate(-4deg)}50%{transform:rotate(4deg)}}
+@keyframes shine{0%{transform:translateX(-100%) rotate(45deg)}100%{transform:translateX(100%) rotate(45deg)}}
+@keyframes toastIn{from{opacity:0;transform:translateX(60px)}to{opacity:1;transform:translateX(0)}}
+@keyframes toastOut{from{opacity:1;transform:translateX(0)}to{opacity:0;transform:translateX(60px)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes pulse-dot{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.5);opacity:.4}}
+
+/* ── SHOP CSS MERGED ── */
+.shop-nav {
+  display:flex;justify-content:space-between;align-items:center;
+  padding:12px 24px;
+  background:rgba(13,13,26,.92);
+  border-bottom:4px solid var(--yellow);
+  backdrop-filter:blur(12px);
+  box-shadow:0 4px 0 var(--orange),0 8px 30px rgba(255,230,0,.1);
+  width: 100%;
+}
+.shop-nav-brand{
+  display:flex;align-items:center;gap:10px;
+  font-family:'Bungee',cursive;font-size:1rem;
+  color:var(--yellow);letter-spacing:2px;
+  text-shadow:2px 2px 0 var(--orange);
+  text-decoration:none;
+}
+.shop-nav-brand .emoji{font-size:1.4rem;}
+
+.wallet-chip{
+  display:flex;align-items:center;gap:16px;flex-wrap:wrap;
+}
+.wchip{
+  display:flex;align-items:center;gap:6px;
+  background:rgba(255,255,255,.06);
+  border:3px solid;border-radius:9999px;
+  padding:6px 14px;
+  font-family:'Outfit',sans-serif;font-size:.88rem;font-weight:700;
+}
+.wchip.turns{border-color:var(--cyan);color:var(--cyan);}
+.wchip.lifelines{border-color:var(--purple);color:var(--purple);}
+.wchip .wval{font-size:1.1rem;font-weight:900;}
+
+.btn-back{
+  display:flex;align-items:center;gap:6px;
+  background:rgba(255,58,242,.1);
+  border:3px dashed var(--accent);border-radius:9999px;
+  padding:7px 16px;color:var(--accent);
+  font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:700;
+  cursor:pointer;transition:.3s;letter-spacing:1px;text-transform:uppercase;
+  text-decoration:none;
+}
+.btn-back:hover{background:rgba(255,58,242,.2);}
+
+.shop-hero{
+  text-align:center;padding:48px 20px 32px;
+  position:relative;z-index:1;
+  width: 100%;
+}
+.shop-hero-bg-text{
+  position:absolute;top:0;left:50%;transform:translateX(-50%);
+  font-family:'Bungee',cursive;font-size:clamp(80px,18vw,200px);
+  color:rgba(255,230,0,.04);pointer-events:none;white-space:nowrap;
+  letter-spacing:-5px;user-select:none;
+}
+.shop-hero h1{
+  font-family:'Outfit',sans-serif;font-size:clamp(2rem,7vw,4rem);
+  font-weight:900;text-transform:uppercase;line-height:1;
+  position:relative;z-index:1;
+  background:linear-gradient(90deg,var(--yellow),var(--orange),var(--accent),var(--yellow));
+  background-size:250%;-webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;background-clip:text;
+  animation:gs 4s ease infinite;
+}
+.shop-hero p{
+  margin-top:12px;color:rgba(255,255,255,.55);font-size:1rem;
+  position:relative;z-index:1;letter-spacing:1px;
+}
+
+.shop-grid{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
+  gap:20px;max-width:900px;margin:0 auto;
+  padding:0 20px 40px;position:relative;z-index:1;
+  width: 100%;
+}
+
+.product-card{
+  border-radius:28px;padding:32px 28px;
+  position:relative;overflow:hidden;
+  transition:all .3s cubic-bezier(.68,-.55,.265,1.55);
+}
+.product-card::before{
+  content:'';position:absolute;inset:0;border-radius:24px;
+  background-image:radial-gradient(circle at 80% 10%,rgba(255,255,255,.06) 0%,transparent 50%);
+  pointer-events:none;
+}
+.product-card.turns-card{
+  background:linear-gradient(135deg,rgba(0,245,212,.12),rgba(45,27,78,.9));
+  border:4px solid var(--cyan);
+  box-shadow:8px 8px 0 var(--purple),16px 16px 0 rgba(123,47,255,.3),
+             0 0 40px rgba(0,245,212,.1);
+}
+.product-card.lifeline-card{
+  background:linear-gradient(135deg,rgba(123,47,255,.15),rgba(45,27,78,.9));
+  border:4px solid var(--purple);
+  box-shadow:8px 8px 0 var(--accent),16px 16px 0 rgba(255,58,242,.25),
+             0 0 40px rgba(123,47,255,.1);
+}
+.product-card:hover{
+  transform:translateY(-6px) rotate(-.5deg);
+}
+.product-card.turns-card:hover{box-shadow:12px 12px 0 var(--purple),24px 24px 0 rgba(123,47,255,.4),0 0 60px rgba(0,245,212,.2);}
+.product-card.lifeline-card:hover{box-shadow:12px 12px 0 var(--accent),24px 24px 0 rgba(255,58,242,.35),0 0 60px rgba(123,47,255,.2);}
+
+.card-icon{font-size:3.5rem;display:block;margin-bottom:16px;animation:iconWig 2s ease-in-out infinite;}
+
+.card-name{
+  font-family:'Bungee',cursive;font-size:1.4rem;letter-spacing:2px;
+  text-transform:uppercase;margin-bottom:8px;
+}
+.turns-card .card-name{color:var(--cyan);text-shadow:2px 2px 0 var(--purple);}
+.lifeline-card .card-name{color:var(--purple);text-shadow:2px 2px 0 var(--accent);}
+
+.card-desc{font-size:.9rem;color:rgba(255,255,255,.65);line-height:1.6;margin-bottom:20px;}
+
+.price-row{
+  display:flex;align-items:baseline;gap:8px;margin-bottom:24px;
+  flex-wrap:wrap;
+}
+.price-amount{
+  font-family:'Outfit',sans-serif;font-size:2rem;font-weight:900;
+  color:var(--yellow);
+  text-shadow:2px 2px 0 var(--orange);
+}
+.price-unit{font-size:.85rem;color:rgba(255,255,255,.45);letter-spacing:1px;}
+
+.qty-row{display:flex;align-items:center;gap:10px;margin-bottom:22px;flex-wrap:wrap;}
+.qty-label{font-size:.78rem;color:rgba(255,255,255,.5);letter-spacing:1px;text-transform:uppercase;font-weight:700;}
+.qty-btns{display:flex;align-items:center;gap:6px;}
+.qty-btn{
+  width:34px;height:34px;border-radius:10px;
+  border:3px solid;background:transparent;
+  font-family:'Outfit',sans-serif;font-size:1.1rem;font-weight:900;
+  cursor:pointer;transition:.2s;display:flex;align-items:center;justify-content:center;
+}
+.turns-card .qty-btn{border-color:var(--cyan);color:var(--cyan);}
+.turns-card .qty-btn:hover{background:rgba(0,245,212,.2);}
+.lifeline-card .qty-btn{border-color:var(--purple);color:var(--purple);}
+.lifeline-card .qty-btn:hover{background:rgba(123,47,255,.2);}
+.qty-val{
+  font-family:'Outfit',sans-serif;font-size:1.3rem;font-weight:900;
+  min-width:40px;text-align:center;color:#fff;
+}
+.qty-presets{display:flex;gap:6px;flex-wrap:wrap;}
+.qty-preset{
+  padding:4px 12px;border-radius:8px;border:2px solid;
+  font-size:.78rem;font-weight:700;cursor:pointer;transition:.2s;
+  font-family:'DM Sans',sans-serif;
+}
+.turns-card .qty-preset{border-color:rgba(0,245,212,.35);color:rgba(0,245,212,.7);}
+.turns-card .qty-preset:hover,.turns-card .qty-preset.active{background:rgba(0,245,212,.2);border-color:var(--cyan);color:var(--cyan);}
+.lifeline-card .qty-preset{border-color:rgba(123,47,255,.35);color:rgba(123,47,255,.7);}
+.lifeline-card .qty-preset:hover,.lifeline-card .qty-preset.active{background:rgba(123,47,255,.2);border-color:var(--purple);color:var(--purple);}
+
+.total-row{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:12px 16px;border-radius:12px;margin-bottom:20px;
+  background:rgba(0,0,0,.25);border:2px dashed rgba(255,255,255,.1);
+  flex-wrap:wrap;gap:8px;
+}
+.total-label{font-size:.8rem;color:rgba(255,255,255,.5);letter-spacing:1px;text-transform:uppercase;font-weight:700;}
+.total-val{font-family:'Outfit',sans-serif;font-size:1.4rem;font-weight:900;color:var(--yellow);}
+
+.btn-buy{
+  width:100%;padding:15px;
+  font-family:'Outfit',sans-serif;font-size:1rem;font-weight:900;
+  letter-spacing:3px;text-transform:uppercase;
+  color:#000;border:none;border-radius:9999px;cursor:pointer;
+  transition:all .3s cubic-bezier(.68,-.55,.265,1.55);
+  position:relative;overflow:hidden;
+}
+.turns-card .btn-buy{
+  background:linear-gradient(135deg,var(--cyan),#00c4aa);
+  box-shadow:4px 4px 0 var(--purple),0 0 25px rgba(0,245,212,.2);
+}
+.turns-card .btn-buy:hover{transform:scale(1.04) rotate(-.5deg);box-shadow:8px 8px 0 var(--purple),0 0 40px rgba(0,245,212,.3);}
+.lifeline-card .btn-buy{
+  background:linear-gradient(135deg,var(--purple),#5a1fd1);
+  color:#fff;
+  box-shadow:4px 4px 0 var(--accent),0 0 25px rgba(123,47,255,.25);
+}
+.lifeline-card .btn-buy:hover{transform:scale(1.04) rotate(.5deg);box-shadow:8px 8px 0 var(--accent),0 0 40px rgba(123,47,255,.35);}
+.btn-buy:active{transform:scale(.97)!important;}
+.btn-buy:disabled{opacity:.5;cursor:not-allowed;transform:none!important;}
+
+.shop-history-section{
+  max-width:900px;margin:0 auto 60px;
+  padding:0 20px;position:relative;z-index:1;
+  width: 100%;
+}
+.shop-section-title{
+  font-family:'Bungee',cursive;font-size:1rem;
+  color:var(--orange);letter-spacing:3px;text-transform:uppercase;
+  margin-bottom:16px;display:flex;align-items:center;gap:10px;
+  text-shadow:2px 2px 0 rgba(255,107,53,.4);
+}
+.txn-list{display:flex;flex-direction:column;gap:8px;}
+.txn-item{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:12px 18px;border-radius:14px;
+  background:rgba(45,27,78,.5);
+  border:3px solid rgba(255,255,255,.06);
+  border-left:4px solid;
+  transition:.2s;flex-wrap:wrap;gap:8px;
+}
+.txn-item:hover{background:rgba(45,27,78,.7);}
+.txn-item[data-type="game_turn"]{border-left-color:var(--cyan);}
+.txn-item[data-type="bonus_lifeline"]{border-left-color:var(--purple);}
+.txn-left{display:flex;flex-direction:column;gap:3px;}
+.txn-name{font-family:'Outfit',sans-serif;font-size:.9rem;font-weight:700;color:#fff;}
+.txn-meta{font-size:.75rem;color:rgba(255,255,255,.4);}
+.txn-right{display:flex;flex-direction:column;align-items:flex-end;gap:4px;}
+.txn-price{font-family:'Outfit',sans-serif;font-size:1rem;font-weight:900;color:var(--yellow);}
+.txn-status{
+  font-size:.7rem;font-weight:700;padding:3px 10px;border-radius:6px;letter-spacing:1px;text-transform:uppercase;
+}
+.txn-status.paid{background:rgba(0,245,212,.15);color:var(--cyan);border:1px solid rgba(0,245,212,.3);}
+.txn-status.pending{background:rgba(255,230,0,.12);color:var(--yellow);border:1px solid rgba(255,230,0,.3);}
+.txn-status.failed{background:rgba(255,58,242,.12);color:var(--accent);border:1px solid rgba(255,58,242,.25);}
+
+/* SHOP OVERLAY & MODAL */
+.shop-overlay{
+  display:none;position:fixed;inset:0;
+  background:rgba(13,13,26,.88);backdrop-filter:blur(10px);
+  z-index:200;justify-content:center;align-items:center;
+}
+.shop-overlay.show{display:flex;animation:fadeIn .3s ease;}
+
+.shop-pay-modal{
+  background:linear-gradient(135deg,#1a0a3e,#0f2050);
+  border:4px solid var(--yellow);border-radius:28px;
+  padding:32px 28px;max-width:440px;width:90%;
+  box-shadow:8px 8px 0 var(--accent),16px 16px 0 rgba(255,58,242,.25);
+  position:relative;overflow:hidden;
+}
+.shop-pay-modal::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse at 80% 20%,rgba(255,230,0,.06) 0%,transparent 50%),
+              radial-gradient(ellipse at 10% 80%,rgba(0,245,212,.05) 0%,transparent 50%);
+  pointer-events:none;
+}
+.shop-modal-head{
+  display:flex;justify-content:space-between;align-items:flex-start;
+  margin-bottom:20px;
+}
+.shop-modal-head h2{
+  font-family:'Bungee',cursive;font-size:1.1rem;
+  color:var(--yellow);letter-spacing:2px;
+  text-shadow:2px 2px 0 var(--orange);
+}
+.shop-modal-close{
+  background:rgba(255,58,242,.15);border:2px solid var(--accent);
+  border-radius:8px;width:30px;height:30px;
+  color:var(--accent);font-size:.9rem;font-weight:900;
+  cursor:pointer;transition:.2s;display:flex;align-items:center;justify-content:center;
+  font-family:'Outfit',sans-serif;
+}
+.shop-modal-close:hover{background:rgba(255,58,242,.3);}
+
+.order-summary{
+  background:rgba(0,0,0,.3);border:2px dashed rgba(255,255,255,.1);
+  border-radius:14px;padding:16px;margin-bottom:18px;
+  position:relative;z-index:1;
+}
+.os-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;}
+.os-label{font-size:.82rem;color:rgba(255,255,255,.5);}
+.os-val{font-family:'Outfit',sans-serif;font-size:.95rem;font-weight:700;color:#fff;}
+.os-divider{border:none;border-top:1px dashed rgba(255,255,255,.1);margin:8px 0;}
+.os-total-row{display:flex;justify-content:space-between;align-items:center;}
+.os-total-label{font-size:.85rem;font-weight:700;color:rgba(255,255,255,.7);letter-spacing:1px;text-transform:uppercase;}
+.os-total-val{font-family:'Bungee',cursive;font-size:1.6rem;color:var(--yellow);text-shadow:2px 2px 0 var(--orange);}
+
+.pay-ref-box{
+  background:rgba(255,230,0,.06);border:2px solid rgba(255,230,0,.2);
+  border-radius:10px;padding:10px 14px;margin-bottom:18px;
+  position:relative;z-index:1;
+}
+.pay-ref-label{font-size:.72rem;color:rgba(255,255,255,.45);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;}
+.pay-ref-val{font-family:'DM Sans',sans-serif;font-size:.88rem;color:var(--yellow);font-weight:700;word-break:break-all;}
+
+.webhook-info{
+  background:rgba(0,245,212,.06);border:2px dashed rgba(0,245,212,.2);
+  border-radius:10px;padding:12px 14px;margin-bottom:18px;
+  font-size:.82rem;color:rgba(255,255,255,.6);line-height:1.6;
+  position:relative;z-index:1;
+}
+.webhook-info code{
+  display:block;margin-top:6px;padding:8px 10px;
+  background:rgba(0,0,0,.35);border-radius:6px;
+  font-size:.78rem;color:var(--cyan);
+  white-space:pre;overflow-x:auto;
+  font-family:'Courier New',monospace;
+}
+
+.modal-status{
+  display:none;padding:10px 14px;border-radius:10px;
+  font-size:.88rem;margin-bottom:14px;
+  align-items:center;gap:8px;
+  position:relative;z-index:1;
+}
+.modal-status.show{display:flex;}
+.modal-status.success{background:rgba(0,245,212,.12);border:2px solid rgba(0,245,212,.3);color:var(--cyan);}
+.modal-status.error{background:rgba(255,58,242,.12);border:2px solid rgba(255,58,242,.3);color:var(--accent);}
+
+.btn-simulate{
+  width:100%;padding:13px;margin-bottom:10px;
+  font-family:'Outfit',sans-serif;font-size:.88rem;font-weight:900;
+  letter-spacing:2px;text-transform:uppercase;
+  background:transparent;
+  border:3px dashed var(--cyan);border-radius:9999px;
+  color:var(--cyan);cursor:pointer;transition:.3s;
+  position:relative;z-index:1;
+}
+.btn-simulate:hover{background:rgba(0,245,212,.1);}
+
+.btn-confirm-pay{
+  width:100%;padding:14px;
+  font-family:'Outfit',sans-serif;font-size:1rem;font-weight:900;
+  letter-spacing:3px;text-transform:uppercase;
+  color:#000;border:none;border-radius:9999px;cursor:pointer;
+  background:linear-gradient(135deg,var(--yellow),var(--orange));
+  box-shadow:4px 4px 0 var(--purple);
+  transition:all .3s cubic-bezier(.68,-.55,.265,1.55);
+  position:relative;z-index:1;
+}
+.btn-confirm-pay:hover{transform:scale(1.04);box-shadow:8px 8px 0 var(--purple);}
+.btn-confirm-pay:disabled{opacity:.5;cursor:not-allowed;transform:none;}
+
+.toast-wrap{position:fixed;top:80px;right:20px;z-index:999;display:flex;flex-direction:column;gap:8px;pointer-events:none;}
+.toast{
+  display:flex;align-items:center;gap:10px;
+  padding:12px 18px;border-radius:14px;
+  font-family:'Outfit',sans-serif;font-size:.9rem;font-weight:700;
+  max-width:320px;
+  pointer-events:auto;
+  animation:toastIn .4s cubic-bezier(.68,-.55,.265,1.55),toastOut .4s ease forwards;
+  animation-delay:0s,3.5s;
+}
+.toast.success{background:rgba(0,245,212,.15);border:3px solid var(--cyan);color:var(--cyan);box-shadow:4px 4px 0 var(--purple);}
+.toast.error{background:rgba(255,58,242,.15);border:3px solid var(--accent);color:var(--accent);box-shadow:4px 4px 0 var(--yellow);}
+</style>
 </head>
-
 <body>
-    <!-- MÀN HÌNH CHÀO MỪNG -->
-    <div id="welcome-screen" class="screen active">
-        <div class="particles" id="particles"></div>
-        <div class="welcome-content">
-            <div class="logo-container">
-                <div class="logo-glow"></div>
-                <h1 class="game-title">
-                    <span class="title-line">AI LÀ</span>
-                    <span class="title-main">TRIỆU PHÚ</span>
-                    <span class="title-sub">Who Wants To Be A Millionaire</span>
-                </h1>
-            </div>
-            <div class="player-input">
-                <label id="welcome-text" style="font-size: 1.5rem; color: var(--gold); font-weight: bold;">Đang tải thông tin...</label>
-                <input type="hidden" id="player-name">
-            </div>
-            <button id="start-btn" class="btn-primary" onclick="startGame()">
-                <i class="fas fa-play"></i> BẮT ĐẦU CHƠI
-            </button>
-            <div class="rules-preview">
-                <h3><i class="fas fa-info-circle"></i> Luật chơi</h3>
-                <ul>
-                    <li>🎯 Trả lời đúng 15 câu hỏi để giành 150 triệu đồng</li>
-                    <li>⏱️ Mỗi câu hỏi có 30 giây suy nghĩ</li>
-                    <li>🆘 3 quyền trợ giúp: 50:50, Gọi điện, Hỏi khán giả</li>
-                    <li>💰 2 mốc an toàn: Câu 5 và Câu 10</li>
-                    <li>🤖 Chatbot MC hỗ trợ bạn suốt trò chơi</li>
-                </ul>
-            </div>
 
-            <!-- LỊCH SỬ CHƠI -->
-            <div id="history-container" class="history-list" style="display:none; margin-top: 20px;">
-                <h3 style="color: var(--gold); margin-bottom: 10px; font-size: 1.1rem;"><i class="fas fa-history"></i> Lịch sử chơi gần đây</h3>
-                <div class="history-scroll" id="history-items">
-                    <!-- Sẽ được điền bằng JS -->
-                </div>
-            </div>
+<!-- ═══ WELCOME SCREEN ═══ -->
+<div id="welcome-screen" class="screen active">
 
-        </div>
-    </div>
-    <!-- MÀN HÌNH CHƠI GAME -->
-    <div id="game-screen" class="screen">
-        <div class="top-bar">
-            <div class="player-info" style="gap:15px;">
-                <i class="fas fa-user-astronaut"></i>
-                <span id="display-name">Người chơi</span>
-                <button onclick="doLogout()" title="Đăng xuất" style="background:rgba(233,69,96,0.15);border:1px solid rgba(233,69,96,0.4);color:#ff8a9b;border-radius:20px;padding:5px 12px;cursor:pointer;font-size:0.8em;transition:0.3s;" onmouseover="this.style.background='rgba(233,69,96,0.3)'" onmouseout="this.style.background='rgba(233,69,96,0.15)'">
-                    <i class="fas fa-sign-out-alt"></i> Thoát
-                </button>
-            </div>
-            <div class="timer-container">
-                <div class="timer-ring">
-                    <svg viewBox="0 0 100 100">
-                        <circle class="timer-bg" cx="50" cy="50" r="45"></circle>
-                        <circle class="timer-progress" id="timer-circle" cx="50" cy="50" r="45"></circle>
-                    </svg>
-                    <span class="timer-text" id="timer-text">30</span>
-                </div>
-            </div>
-            <div class="current-money"><i class="fas fa-coins"></i><span id="current-prize">0 đ</span></div>
-        </div>
-        <div class="game-main">
-            <div class="question-area">
-                <div class="question-header"
-                    style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                    <div class="question-number" id="question-number" style="margin-bottom: 0;">Câu hỏi 1/15</div>
-                    <button id="translate-btn" onclick="translateQuestion('English')"
-                        style="background: rgba(255,255,255,0.1); color: #fff; border: 1px solid #4ecdc4; border-radius: 20px; padding: 5px 12px; cursor: pointer; display: flex; align-items: center; gap: 5px; font-size: 0.9em; transition: 0.3s;"
-                        onmouseover="this.style.background='rgba(78,205,196,0.3)'"
-                        onmouseout="this.style.background='rgba(255,255,255,0.1)'"><i class="fas fa-language"></i> Dịch
-                        T.Anh</button>
-                </div>
-                <div class="question-box" id="question-box">
-                    <p id="question-text">Đang tải...</p>
-                </div>
-                <div class="answers-grid">
-                    <button class="answer-btn" id="answer-0" onclick="selectAnswer(0)"><span
-                            class="answer-letter">A</span><span class="answer-text" id="text-0">Đáp án A</span></button>
-                    <button class="answer-btn" id="answer-1" onclick="selectAnswer(1)"><span
-                            class="answer-letter">B</span><span class="answer-text" id="text-1">Đáp án B</span></button>
-                    <button class="answer-btn" id="answer-2" onclick="selectAnswer(2)"><span
-                            class="answer-letter">C</span><span class="answer-text" id="text-2">Đáp án C</span></button>
-                    <button class="answer-btn" id="answer-3" onclick="selectAnswer(3)"><span
-                            class="answer-letter">D</span><span class="answer-text" id="text-3">Đáp án D</span></button>
-                </div>
-            </div>
-            <div class="sidebar">
-                <div class="lifelines">
-                    <h3><i class="fas fa-life-ring"></i> Trợ giúp</h3>
-                    <div class="lifeline-buttons">
-                        <button class="lifeline-btn" id="lifeline-5050" onclick="useLifeline('5050')"><i
-                                class="fas fa-scissors"></i><span>50:50</span></button>
-                        <button class="lifeline-btn" id="lifeline-phone" onclick="useLifeline('phone')"><i
-                                class="fas fa-phone"></i><span>Gọi ĐT</span></button>
-                        <button class="lifeline-btn" id="lifeline-audience" onclick="useLifeline('audience')"><i
-                                class="fas fa-users"></i><span>Khán giả</span></button>
-                    </div>
-                </div>
-                <div class="money-ladder">
-                    <h3><i class="fas fa-trophy"></i> Bảng tiền</h3>
-                    <ul id="money-list"></ul>
-                </div>
-                <button class="btn-stop" id="stop-btn" onclick="stopGame()"><i class="fas fa-hand"></i> Dừng cuộc
-                    chơi</button>
-            </div>
-        </div>
-    </div>
-    <!-- MODAL TRỢ GIÚP -->
-    <div class="modal-overlay" id="modal-overlay">
-        <div class="modal" id="lifeline-modal">
-            <div class="modal-header">
-                <h2 id="modal-title">Kết quả trợ giúp</h2><button class="modal-close" onclick="closeModal()"><i
-                        class="fas fa-times"></i></button>
-            </div>
-            <div class="modal-body" id="modal-body"></div>
-            <button class="btn-primary modal-ok" onclick="closeModal()"><i class="fas fa-check"></i> Đã hiểu</button>
-        </div>
-    </div>
-    <!-- MÀN HÌNH KẾT QUẢ -->
-    <div id="result-screen" class="screen">
-        <div class="result-content">
-            <div class="result-icon" id="result-icon">🏆</div>
-            <h1 class="result-title" id="result-title">Chúc mừng!</h1>
-            <div class="result-details">
-                <p id="result-message">Bạn đã chiến thắng!</p>
-                <div class="result-prize" id="result-prize"><span class="prize-label">Số tiền nhận được:</span><span
-                        class="prize-amount" id="prize-amount">0 đ</span></div>
-                <div class="result-stats">
-                    <div class="stat"><i class="fas fa-check-circle"></i><span id="correct-count">0</span><label>Câu
-                            đúng</label></div>
-                    <div class="stat"><i class="fas fa-clock"></i><span id="total-time">0s</span><label>Thời
-                            gian</label></div>
-                </div>
-            </div>
-            <button class="btn-primary" onclick="resetGame()"><i class="fas fa-redo"></i> Chơi lại</button>
-        </div>
-    </div>
-    <!-- CHATBOT -->
-    <button class="chatbot-toggle" id="chatbot-toggle" onclick="toggleChatbot()"><i class="fas fa-robot"></i><span
-            class="chat-badge" id="chat-badge" style="display:none">1</span></button>
-    <div class="chatbot-window" id="chatbot-window">
-        <div class="chatbot-header">
-            <div class="chatbot-info">
-                <div class="chatbot-avatar">🤖</div>
-                <div>
-                    <h4>MC Trợ Lý</h4><span class="chatbot-status">Online</span>
-                </div>
-            </div>
-            <button class="chatbot-close" onclick="toggleChatbot()"><i class="fas fa-minus"></i></button>
-        </div>
-        <div class="chatbot-messages" id="chatbot-messages"></div>
-        <div class="chatbot-input">
-            <input type="text" id="chat-input" placeholder="Nhắn tin với MC..."
-                onkeypress="if(event.key==='Enter') sendChat()">
-            <button onclick="sendChat()"><i class="fas fa-paper-plane"></i></button>
-        </div>
-    </div>
-    <button class="sound-toggle" id="sound-toggle" onclick="toggleSound()"><i class="fas fa-volume-up"
-            id="sound-icon"></i></button>
-    <script src="/static/js/game.js"></script>
-    <script>
-        // Tự động lấy tên người dùng đã đăng nhập từ session
-        fetch('/api/auth/me')
-            .then(r => r.json())
-            .then(d => {
-                if (!d.logged_in) { window.location.href = '/auth'; return; }
-                const nameInput = document.getElementById('player-name');
-                const welcomeText = document.getElementById('welcome-text');
-                if (nameInput && welcomeText) {
-                    nameInput.value = d.display_name;
-                    welcomeText.innerText = "Chào mừng, " + d.display_name + "!";
-                    playerName = d.display_name;
-                }
-                
-                // Lấy lịch sử
-                loadHistory();
-            });
+  <!-- Floating decos -->
+  <span class="deco deco-star" style="top:80px;left:5%;color:#FF3AF2;" aria-hidden="true">✦</span>
+  <span class="deco deco-star" style="top:160px;right:8%;color:#FFE600;" aria-hidden="true">★</span>
+  <span class="deco deco-star" style="top:40%;left:2%;color:#00F5D4;" aria-hidden="true">◆</span>
+  <span class="deco deco-star" style="bottom:200px;right:4%;color:#FF6B35;" aria-hidden="true">✦</span>
+  <span class="deco deco-star" style="bottom:100px;left:7%;color:#7B2FFF;" aria-hidden="true">❋</span>
 
-        async function loadHistory() {
-            try {
-                const r = await fetch('/api/game/history');
-                const d = await r.json();
-                if (d.success && d.history && d.history.length > 0) {
-                    const container = document.getElementById('history-container');
-                    const itemsList = document.getElementById('history-items');
-                    container.style.display = 'block';
-                    itemsList.innerHTML = d.history.map(h => `
-                        <div class="history-item ${h.result}">
-                            <div class="h-main">
-                                <span class="h-result">${h.result === 'win' ? '🏆 THẮNG' : '❌ THUA'}</span>
-                                <span class="h-prize">${h.score.toLocaleString()} đ</span>
-                            </div>
-                            <div class="h-meta">
-                                <span>${h.duration_sec}s</span>
-                                <span>${new Date(h.played_at).toLocaleDateString('vi-VN')}</span>
-                            </div>
-                        </div>
-                    `).join('');
-                }
-            } catch (e) {
-                console.error("Lỗi lấy lịch sử:", e);
-            }
-        }
+  <div class="welcome-inner">
+    <div class="bg-text" aria-hidden="true">TRIỆU PHÚ</div>
 
+    <div class="logo-wrap">
+      <span class="title-who">Who Wants To Be A</span>
+      <span class="title-main">Triệu Phú</span>
+      <span class="title-sub">🏆 Game Show Trí Tuệ 🏆</span>
+    </div>
 
-        // Đăng xuất
-        async function doLogout() {
-            if (!confirm('Bạn muốn đăng xuất khỏi game?')) return;
-            await fetch('/api/auth/logout', { method: 'POST' });
-            window.location.href = '/auth';
-        }
-    </script>
+    <div class="welcome-box">
+      <span class="welcome-label" id="welcome-text">Đang tải...</span>
+      <input type="hidden" id="player-name">
+
+      <!-- Giao diện lượt chơi & Trợ giúp -->
+      <div style="display: flex; justify-content: center; gap: 10px; margin-bottom: 20px;">
+        <div class="wchip turns" style="border: 3px solid var(--cyan); color: var(--cyan); border-radius: 9999px; padding: 6px 14px; font-family: 'Outfit', sans-serif; font-size: .88rem; font-weight: 700; background: rgba(255,255,255,.06); display: flex; align-items: center; gap: 6px;">
+          🎮 Lượt chơi: <span class="wval" id="welcome-turns" style="font-size: 1.1rem; font-weight: 900;">...</span>
+        </div>
+        <div class="wchip lifelines" style="border: 3px solid var(--purple); color: var(--purple); border-radius: 9999px; padding: 6px 14px; font-family: 'Outfit', sans-serif; font-size: .88rem; font-weight: 700; background: rgba(255,255,255,.06); display: flex; align-items: center; gap: 6px;">
+          ⚡ Trợ giúp: <span class="wval" id="welcome-lifelines" style="font-size: 1.1rem; font-weight: 900;">...</span>
+        </div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 12px; width: 100%;">
+        <button class="btn-start" id="start-btn" onclick="startGame()" style="margin-bottom: 0; width: 100%; max-width: 320px; justify-content: center;">
+          ▶ BẮT ĐẦU CHƠI
+        </button>
+        <button class="btn-start" id="shop-btn" onclick="openShop()" style="margin-bottom: 20px; background: linear-gradient(135deg, var(--purple), var(--accent)); border-color: var(--yellow); box-shadow: 0 0 20px rgba(123,47,255,0.4); width: 100%; max-width: 320px; justify-content: center;">
+          🛒 CỬA HÀNG
+        </button>
+      </div>
+
+      <div class="rules-box">
+        <div class="rules-title">⚡ Luật chơi</div>
+        <ul class="rules-list">
+          <li><div class="rule-badge">🎯</div>Trả lời đúng 15 câu hỏi để giành <strong>150 triệu đồng</strong></li>
+          <li><div class="rule-badge">⏱️</div>Mỗi câu hỏi có <strong>30 giây</strong> suy nghĩ</li>
+          <li><div class="rule-badge">🆘</div>3 quyền trợ giúp: <strong>50:50, Gọi điện, Hỏi khán giả</strong></li>
+          <li><div class="rule-badge">💰</div>2 mốc an toàn: <strong>Câu 5</strong> và <strong>Câu 10</strong></li>
+          <li><div class="rule-badge">🤖</div>Chatbot MC hỗ trợ bạn suốt trò chơi</li>
+        </ul>
+      </div>
+    </div>
+
+    <div id="history-container" class="history-block" style="display:none;">
+      <div class="history-title">◈ Lịch sử gần đây</div>
+      <div class="history-scroll" id="history-items"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SHOP SCREEN ═══ -->
+<div id="shop-screen" class="screen">
+  <!-- NAV -->
+  <nav class="shop-nav">
+    <a href="javascript:void(0)" onclick="closeShop()" class="shop-nav-brand">
+      <span class="emoji" aria-hidden="true">🎯</span> AI LÀ TRIỆU PHÚ
+    </a>
+    <div class="wallet-chip">
+      <div class="wchip turns">
+        🎮 <span>Lượt chơi:</span> <span class="wval" id="nav-turns">...</span>
+      </div>
+      <div class="wchip lifelines">
+        ⚡ <span>Trợ giúp:</span> <span class="wval" id="nav-lifelines">...</span>
+      </div>
+    </div>
+    <button class="btn-back" onclick="closeShop()">← Về trang chơi</button>
+  </nav>
+
+  <!-- HERO -->
+  <section class="shop-hero">
+    <div class="shop-hero-bg-text" aria-hidden="true">SHOP</div>
+    <h1>🛒 Cửa hàng</h1>
+    <p>Nạp thêm lượt chơi & quyền trợ giúp để chinh phục 150 triệu đồng!</p>
+  </section>
+
+  <!-- SHOP GRID -->
+  <div class="shop-grid">
+    <!-- CARD 1: Lượt chơi -->
+    <div class="product-card turns-card">
+      <span class="card-icon" aria-hidden="true">🎮</span>
+      <div class="card-name">Lượt chơi</div>
+      <p class="card-desc">Mỗi ván chơi tiêu thụ 1 lượt. Hết lượt sẽ không thể bắt đầu ván mới. Bạn nhận <strong>3 lượt miễn phí</strong> khi đăng ký!</p>
+      <div class="price-row">
+        <span class="price-amount">5.000đ</span>
+        <span class="price-unit">/ lượt</span>
+      </div>
+      <div class="qty-row">
+        <span class="qty-label">Số lượng</span>
+        <div class="qty-btns">
+          <button class="qty-btn" onclick="changeQty('turns',-1)">−</button>
+          <span class="qty-val" id="qty-turns">1</span>
+          <button class="qty-btn" onclick="changeQty('turns',1)">+</button>
+        </div>
+        <div class="qty-presets">
+          <button class="qty-preset" onclick="setQty('turns',1)" data-val="1">×1</button>
+          <button class="qty-preset" onclick="setQty('turns',3)" data-val="3">×3</button>
+          <button class="qty-preset" onclick="setQty('turns',5)" data-val="5">×5</button>
+          <button class="qty-preset" onclick="setQty('turns',10)" data-val="10">×10</button>
+        </div>
+      </div>
+      <div class="total-row">
+        <span class="total-label">Tổng cộng</span>
+        <span class="total-val" id="total-turns">5.000đ</span>
+      </div>
+      <button class="btn-buy" onclick="openPayModal('game_turn','turns')">
+        💳 MUA NGAY
+      </button>
+    </div>
+
+    <!-- CARD 2: Lượt trợ giúp -->
+    <div class="product-card lifeline-card">
+      <span class="card-icon" aria-hidden="true">⚡</span>
+      <div class="card-name">Lượt trợ giúp</div>
+      <p class="card-desc">Mỗi ván chơi có sẵn 3 quyền trợ giúp mặc định (50:50, Gọi ĐT, Hỏi khán giả). Mua thêm để có thêm lượt dùng trong ván tiếp theo!</p>
+      <div class="price-row">
+        <span class="price-amount">2.000đ</span>
+        <span class="price-unit">/ lượt</span>
+      </div>
+      <div class="qty-row">
+        <span class="qty-label">Số lượng</span>
+        <div class="qty-btns">
+          <button class="qty-btn" onclick="changeQty('lifelines',-1)">−</button>
+          <span class="qty-val" id="qty-lifelines">1</span>
+          <button class="qty-btn" onclick="changeQty('lifelines',1)">+</button>
+        </div>
+        <div class="qty-presets">
+          <button class="qty-preset" onclick="setQty('lifelines',1)" data-val="1">×1</button>
+          <button class="qty-preset" onclick="setQty('lifelines',3)" data-val="3">×3</button>
+          <button class="qty-preset" onclick="setQty('lifelines',5)" data-val="5">×5</button>
+          <button class="qty-preset" onclick="setQty('lifelines',10)" data-val="10">×10</button>
+        </div>
+      </div>
+      <div class="total-row">
+        <span class="total-label">Tổng cộng</span>
+        <span class="total-val" id="total-lifelines">2.000đ</span>
+      </div>
+      <button class="btn-buy" onclick="openPayModal('bonus_lifeline','lifelines')">
+        💳 MUA NGAY
+      </button>
+    </div>
+  </div>
+
+  <!-- HISTORY -->
+  <section class="shop-history-section">
+    <div class="shop-section-title">📜 Lịch sử mua hàng</div>
+    <div class="txn-list" id="shop-txn-list">
+      <div style="color:rgba(255,255,255,.4);font-size:.9rem;text-align:center;padding:20px;">Đang tải...</div>
+    </div>
+  </section>
+</div>
+
+<!-- ─── SHOP PAYMENT MODAL ─── -->
+<div class="shop-overlay" id="shop-pay-overlay">
+  <div class="shop-pay-modal">
+    <div class="shop-modal-head">
+      <h2 id="shop-modal-title">💳 XÁC NHẬN THANH TOÁN</h2>
+      <button class="shop-modal-close" onclick="closePayModal()">✕</button>
+    </div>
+
+    <!-- Order summary -->
+    <div class="order-summary">
+      <div class="os-row">
+        <span class="os-label">Sản phẩm</span>
+        <span class="os-val" id="shop-modal-item-name">—</span>
+      </div>
+      <div class="os-row">
+        <span class="os-label">Đơn giá</span>
+        <span class="os-val" id="shop-modal-unit-price">—</span>
+      </div>
+      <div class="os-row">
+        <span class="os-label">Số lượng</span>
+        <span class="os-val" id="shop-modal-qty">—</span>
+      </div>
+      <hr class="os-divider">
+      <div class="os-total-row">
+        <span class="os-total-label">Tổng</span>
+        <span class="os-total-val" id="shop-modal-total">—</span>
+      </div>
+    </div>
+
+    <!-- QR Code Section (hiện sau khi tạo đơn) -->
+    <div id="shop-qr-section" style="display:none;">
+      <!-- QR Image -->
+      <div style="text-align:center; margin-bottom:14px; position:relative; z-index:1;">
+        <div style="display:inline-block; padding:10px; background:#fff; border-radius:16px; box-shadow:0 0 0 4px var(--yellow),0 0 30px rgba(255,230,0,.25);">
+          <img id="shop-qr-img" src="" alt="QR Code thanh toán" width="200" height="200" style="display:block; border-radius:8px;">
+        </div>
+        <div style="margin-top:8px; font-size:.75rem; color:rgba(255,255,255,.45); letter-spacing:1px;">
+          📱 Quét bằng app ngân hàng bất kỳ
+        </div>
+      </div>
+
+      <!-- Bank transfer info -->
+      <div style="background:rgba(0,0,0,.3); border:2px dashed rgba(255,255,255,.12); border-radius:14px; padding:14px; margin-bottom:14px; position:relative; z-index:1;">
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:5px 0; border-bottom:1px solid rgba(255,255,255,.06); margin-bottom:8px;">
+          <span style="font-size:.78rem; color:rgba(255,255,255,.5);">🏦 Ngân hàng</span>
+          <span style="font-family:'Outfit',sans-serif; font-weight:700; color:#fff;" id="shop-bank-name">—</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:5px 0; border-bottom:1px solid rgba(255,255,255,.06); margin-bottom:8px;">
+          <span style="font-size:.78rem; color:rgba(255,255,255,.5);">💳 Số tài khoản</span>
+          <span style="font-family:'Outfit',sans-serif; font-weight:700; color:var(--cyan);" id="shop-account-no">—</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:5px 0; border-bottom:1px solid rgba(255,255,255,.06); margin-bottom:8px;">
+          <span style="font-size:.78rem; color:rgba(255,255,255,.5);">👤 Chủ tài khoản</span>
+          <span style="font-family:'Outfit',sans-serif; font-weight:700; color:#fff;" id="shop-account-name">—</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:5px 0; border-bottom:1px solid rgba(255,255,255,.06); margin-bottom:8px;">
+          <span style="font-size:.78rem; color:rgba(255,255,255,.5);">💰 Số tiền</span>
+          <span style="font-family:'Bungee',cursive; color:var(--yellow); font-size:1.1rem;" id="shop-transfer-amount">—</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:5px 0;">
+          <span style="font-size:.78rem; color:rgba(255,255,255,.5);">📝 Nội dung CK</span>
+          <span style="font-family:'DM Sans',sans-serif; font-weight:700; color:var(--accent); font-size:.85rem; cursor:pointer;" id="shop-transfer-content" onclick="copyPayRef()" title="Click để copy">— ✦</span>
+        </div>
+      </div>
+
+      <!-- Polling status indicator -->
+      <div id="shop-polling-status" style="display:flex; align-items:center; gap:10px; padding:10px 14px; border-radius:10px; background:rgba(0,245,212,.06); border:2px dashed rgba(0,245,212,.25); margin-bottom:14px; position:relative; z-index:1;">
+        <span id="shop-polling-dot" style="width:10px;height:10px;border-radius:50%;background:var(--cyan);display:inline-block;animation:pulse-dot 1s ease-in-out infinite;flex-shrink:0;"></span>
+        <span style="font-size:.82rem; color:rgba(255,255,255,.7);" id="shop-polling-text">Đang chờ thanh toán... Hệ thống tự động phát hiện.</span>
+      </div>
+    </div>
+
+    <!-- Status message -->
+    <div class="modal-status" id="shop-modal-status"></div>
+
+    <!-- Dev: Simulate paid (DISABLED in production) -->
+    <!-- <button class="btn-simulate" id="shop-btn-simulate" onclick="simulatePaid()" style="display:none;">
+      🧪 [DEV] Giả lập thanh toán thành công
+    </button> -->
+
+    <!-- Main action -->
+    <button class="btn-confirm-pay" id="shop-btn-confirm" onclick="confirmOrder()">
+      ▶ TẠO ĐƠN HÀNG & HIỂN THỊ QR
+    </button>
+  </div>
+</div>
+
+<!-- TOAST WRAP -->
+<div class="toast-wrap" id="shop-toast-wrap"></div>
+
+<!-- ═══ GAME SCREEN ═══ -->
+<div id="game-screen" class="screen">
+  <div class="top-bar">
+    <div class="player-chip">
+      <span class="emoji" aria-hidden="true">👾</span>
+      <span id="display-name">Người chơi</span>
+      <button class="btn-logout" onclick="doLogout()">Thoát</button>
+    </div>
+
+    <div class="timer-wrap">
+      <div class="timer-ring">
+        <svg viewBox="0 0 60 60">
+          <circle class="timer-bg" cx="30" cy="30" r="25"/>
+          <circle class="timer-progress" id="timer-circle" cx="30" cy="30" r="25"/>
+        </svg>
+        <span class="timer-text" id="timer-text">30</span>
+      </div>
+    </div>
+
+    <div class="prize-chip">
+      💰 <span id="current-prize">0 đ</span>
+    </div>
+  </div>
+
+  <div class="game-main">
+    <div class="question-area">
+      <div class="q-header">
+        <div class="q-num-badge" id="question-number">Câu 1/15</div>
+        <button class="btn-translate" id="translate-btn" onclick="translateQuestion('English')">
+          🌐 Dịch T.Anh
+        </button>
+      </div>
+
+      <div class="question-box" id="question-box">
+        <p id="question-text">Đang tải câu hỏi...</p>
+      </div>
+
+      <div class="answers-grid">
+        <button class="answer-btn" id="answer-0" onclick="selectAnswer(0)">
+          <span class="ans-letter">A</span>
+          <span class="ans-text" id="text-0">Đáp án A</span>
+        </button>
+        <button class="answer-btn" id="answer-1" onclick="selectAnswer(1)">
+          <span class="ans-letter">B</span>
+          <span class="ans-text" id="text-1">Đáp án B</span>
+        </button>
+        <button class="answer-btn" id="answer-2" onclick="selectAnswer(2)">
+          <span class="ans-letter">C</span>
+          <span class="ans-text" id="text-2">Đáp án C</span>
+        </button>
+        <button class="answer-btn" id="answer-3" onclick="selectAnswer(3)">
+          <span class="ans-letter">D</span>
+          <span class="ans-text" id="text-3">Đáp án D</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="sidebar">
+      <div class="sidebar-card lifelines-card">
+        <div class="card-title">⚡ Trợ giúp</div>
+        <div class="lifeline-row">
+          <button class="lifeline-btn" id="lifeline-5050" onclick="useLifeline('5050')">
+            <span class="li-icon">✂️</span>50:50
+          </button>
+          <button class="lifeline-btn" id="lifeline-phone" onclick="useLifeline('phone')">
+            <span class="li-icon">📞</span>Gọi ĐT
+          </button>
+          <button class="lifeline-btn" id="lifeline-audience" onclick="useLifeline('audience')">
+            <span class="li-icon">👥</span>Khán giả
+          </button>
+        </div>
+      </div>
+
+      <div class="sidebar-card ladder-card">
+        <div class="card-title">🏆 Bảng tiền</div>
+        <div class="ladder-scroll">
+          <ul class="money-list" id="money-list"></ul>
+        </div>
+      </div>
+
+      <div class="sidebar-card stop-card">
+        <button class="btn-stop" id="stop-btn" onclick="stopGame()">
+          ✋ DỪNG CUỘC CHƠI
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL ═══ -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal" id="lifeline-modal">
+    <div class="modal-header">
+      <span class="modal-title-text" id="modal-title">Kết quả trợ giúp</span>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+    <button class="btn-modal-ok" onclick="closeModal()">✔ ĐÃ HIỂU</button>
+  </div>
+</div>
+
+<!-- ═══ RESULT SCREEN ═══ -->
+<div id="result-screen" class="screen">
+  <div class="result-content">
+    <span class="result-icon" id="result-icon">🏆</span>
+    <h1 class="result-title" id="result-title">Chúc mừng!</h1>
+    <p id="result-message" style="color:rgba(255,255,255,.7);margin-bottom:20px;font-size:1.05rem;"></p>
+
+    <div class="result-prize-box">
+      <span class="prize-label-r">Số tiền nhận được</span>
+      <div class="prize-amount" id="prize-amount">0 đ</div>
+    </div>
+
+    <div class="result-stats">
+      <div class="rstat">
+        <span class="rstat-icon">✅</span>
+        <span class="rstat-val" id="correct-count">0</span>
+        <span class="rstat-lbl">Câu đúng</span>
+      </div>
+      <div class="rstat">
+        <span class="rstat-icon">⏱️</span>
+        <span class="rstat-val" id="total-time">0s</span>
+        <span class="rstat-lbl">Thời gian</span>
+      </div>
+    </div>
+
+    <button class="btn-replay" onclick="resetGame()">🔄 CHƠI LẠI</button>
+  </div>
+</div>
+
+<!-- ═══ CHATBOT ═══ -->
+<button class="chatbot-toggle" id="chatbot-toggle" onclick="toggleChatbot()" aria-label="Mở chatbot">
+  🤖
+  <span class="chat-badge" id="chat-badge" style="display:none">1</span>
+</button>
+
+<div class="chatbot-window" id="chatbot-window">
+  <div class="chatbot-header">
+    <div class="chat-info">
+      <span class="chat-avatar">🤖</span>
+      <div>
+        <h4>MC Trợ Lý</h4>
+        <span class="chat-status">● Online</span>
+      </div>
+    </div>
+    <button class="chat-close-btn" onclick="toggleChatbot()">−</button>
+  </div>
+  <div class="chat-messages" id="chatbot-messages"></div>
+  <div class="chat-input-row">
+    <input type="text" id="chat-input" placeholder="Nhắn tin với MC..." onkeypress="if(event.key==='Enter')sendChat()">
+    <button onclick="sendChat()">➤</button>
+  </div>
+</div>
+
+<button class="sound-btn" id="sound-toggle" onclick="toggleSound()" aria-label="Bật/tắt âm thanh">🔊</button>
+
+<script src="/static/js/game.js"></script>
+<script>
+// Auto-load user info
+fetch('/api/auth/me')
+  .then(r=>r.json())
+  .then(d=>{
+    if(!d.logged_in){window.location.href='/auth';return;}
+    const nameInput=document.getElementById('player-name');
+    const welcomeText=document.getElementById('welcome-text');
+    const displayName=document.getElementById('display-name');
+    if(nameInput&&welcomeText){
+      nameInput.value=d.display_name;
+      welcomeText.innerText='Chào mừng, '+d.display_name+' 🎉';
+      playerName=d.display_name;
+    }
+    if(displayName)displayName.textContent=d.display_name;
+    loadHistory();
+    loadWallet();
+  });
+
+async function loadHistory(){
+  try{
+    const r=await fetch('/api/game/history');
+    const d=await r.json();
+    if(d.success&&d.history&&d.history.length>0){
+      const container=document.getElementById('history-container');
+      const list=document.getElementById('history-items');
+      container.style.display='block';
+      list.innerHTML=d.history.map(h=>`
+        <div class="history-item ${h.result}">
+          <div class="h-main">
+            <span class="h-result">${h.result==='win'?'🏆 THẮNG':'❌ THUA'}</span>
+            <span class="h-prize">${h.score.toLocaleString()} đ</span>
+          </div>
+          <div class="h-meta">
+            <span>${h.duration_sec}s</span>
+            <span>${new Date(h.played_at).toLocaleDateString('vi-VN')}</span>
+          </div>
+        </div>
+      `).join('');
+    }
+  }catch(e){console.error('Lỗi lịch sử:',e);}
+}
+
+async function doLogout(){
+  if(!confirm('Bạn muốn đăng xuất?'))return;
+  await fetch('/api/auth/logout',{method:'POST'});
+  window.location.href='/auth';
+}
+
+// ── SHOP STATE & JS LOGIC ──
+const PRICES = {game_turn: 5000, bonus_lifeline: 2000};
+const LABELS = {game_turn: 'Lượt chơi', bonus_lifeline: 'Lượt trợ giúp'};
+let qty = {turns: 1, lifelines: 1};
+let currentOrder = null; // {item_type, quantity, txn_id, payment_ref}
+
+function openShop() {
+  switchScreen('shop-screen');
+  loadHistoryShop();
+}
+
+function closeShop() {
+  switchScreen('welcome-screen');
+}
+
+async function loadWallet() {
+  try {
+    const r = await fetch('/api/shop/wallet');
+    const d = await r.json();
+    if (d.success) {
+      // Welcome screen wallet chips
+      const welTurns = document.getElementById('welcome-turns');
+      const welLifelines = document.getElementById('welcome-lifelines');
+      if (welTurns) welTurns.textContent = d.game_turns;
+      if (welLifelines) welLifelines.textContent = d.bonus_lifelines;
+
+      // Shop screen wallet chips
+      const navTurns = document.getElementById('nav-turns');
+      const navLifelines = document.getElementById('nav-lifelines');
+      if (navTurns) navTurns.textContent = d.game_turns;
+      if (navLifelines) navLifelines.textContent = d.bonus_lifelines;
+    }
+  } catch(e) { console.error('wallet error', e); }
+}
+
+async function loadHistoryShop() {
+  const el = document.getElementById('shop-txn-list');
+  if (!el) return;
+  try {
+    const r = await fetch('/api/shop/history');
+    const d = await r.json();
+    if (!d.success || !d.transactions.length) {
+      el.innerHTML = '<div style="color:rgba(255,255,255,.35);font-size:.9rem;text-align:center;padding:20px;">Chưa có giao dịch nào.</div>';
+      return;
+    }
+    const statusMap = {paid:'paid',pending:'pending',failed:'failed',refunded:'failed'};
+    const statusLabel = {paid:'✅ Thành công',pending:'⏳ Chờ TT',failed:'❌ Thất bại',refunded:'↩ Hoàn tiền'};
+    el.innerHTML = d.transactions.map(t => `
+      <div class="txn-item" data-type="${t.item_type}">
+        <div class="txn-left">
+          <div class="txn-name">${LABELS[t.item_type] || t.item_type} ×${t.quantity}</div>
+          <div class="txn-meta">${t.payment_ref || '—'} · ${new Date(t.created_at).toLocaleString('vi-VN')}</div>
+        </div>
+        <div class="txn-right">
+          <div class="txn-price">${t.total_price.toLocaleString('vi-VN')}đ</div>
+          <div class="txn-status ${statusMap[t.status]||'pending'}">${statusLabel[t.status]||t.status}</div>
+        </div>
+      </div>
+    `).join('');
+  } catch(e) {
+    el.innerHTML = '<div style="color:rgba(255,58,242,.7);font-size:.9rem;text-align:center;padding:20px;">Lỗi tải lịch sử.</div>';
+  }
+}
+
+// ── Qty controls ──
+function changeQty(type, delta) {
+  qty[type] = Math.max(1, Math.min(99, qty[type] + delta));
+  updateQtyUI(type);
+}
+function setQty(type, val) {
+  qty[type] = val;
+  updateQtyUI(type);
+  const selector = type === 'turns' ? '.turns-card .qty-preset' : '.lifeline-card .qty-preset';
+  document.querySelectorAll(selector).forEach(b => {
+    b.classList.toggle('active', parseInt(b.dataset.val) === val);
+  });
+}
+function updateQtyUI(type) {
+  const itemKey = type === 'turns' ? 'game_turn' : 'bonus_lifeline';
+  const total = PRICES[itemKey] * qty[type];
+  const qtyEl = document.getElementById('qty-'+type);
+  const totalEl = document.getElementById('total-'+type);
+  if (qtyEl) qtyEl.textContent = qty[type];
+  if (totalEl) totalEl.textContent = total.toLocaleString('vi-VN') + 'đ';
+}
+
+// ── Payment Modal ──
+function openPayModal(itemType, qtyKey) {
+  currentOrder = {item_type: itemType, quantity: qty[qtyKey], txn_id: null, payment_ref: null};
+  const total = PRICES[itemType] * qty[qtyKey];
+
+  document.getElementById('shop-modal-item-name').textContent = LABELS[itemType];
+  document.getElementById('shop-modal-unit-price').textContent = PRICES[itemType].toLocaleString('vi-VN') + 'đ';
+  document.getElementById('shop-modal-qty').textContent = qty[qtyKey] + ' lượt';
+  document.getElementById('shop-modal-total').textContent = total.toLocaleString('vi-VN') + 'đ';
+  document.getElementById('shop-qr-section').style.display = 'none';
+  // DEV simulate button disabled
+  const btn = document.getElementById('shop-btn-confirm');
+  btn.textContent = '▶ TẠO ĐƠN HÀNG & HIỆN THỊ QR';
+  btn.disabled = false;
+  btn.style.display = ''; // Khôi phục hiển thị nút bấm
+  setModalStatus('', '');
+
+  document.getElementById('shop-pay-overlay').classList.add('show');
+}
+function closePayModal() {
+  stopPolling();
+  document.getElementById('shop-pay-overlay').classList.remove('show');
+  currentOrder = null;
+}
+
+// ── Step 1: Tạo đơn hàng + hiển QR ──
+async function confirmOrder() {
+  if (!currentOrder) return;
+  const btn = document.getElementById('shop-btn-confirm');
+  btn.disabled = true;
+  btn.textContent = '⏳ Đang tạo đơn...';
+  setModalStatus('', '');
+
+  try {
+    const r = await fetch('/api/shop/create-order', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({item_type: currentOrder.item_type, quantity: currentOrder.quantity})
+    });
+    const d = await r.json();
+    if (!d.success) {
+      setModalStatus('error', '❌ ' + (d.error || 'Không tạo được đơn hàng'));
+      btn.disabled = false; btn.textContent = '▶ TẠO ĐƠN HÀNG & HIỆN THỊ QR';
+      return;
+    }
+    currentOrder.txn_id = d.txn_id;
+    currentOrder.payment_ref = d.payment_ref;
+
+    // Hiển thị QR + thông tin ngân hàng
+    document.getElementById('shop-qr-img').src = d.qr_url;
+    document.getElementById('shop-bank-name').textContent = d.bank_code;
+    document.getElementById('shop-account-no').textContent = d.account_no;
+    document.getElementById('shop-account-name').textContent = d.account_name;
+    document.getElementById('shop-transfer-amount').textContent = d.total_price.toLocaleString('vi-VN') + 'đ';
+    document.getElementById('shop-transfer-content').textContent = d.payment_ref + ' ✔';
+    document.getElementById('shop-qr-section').style.display = 'block';
+    // DEV simulate button is permanently disabled in production
+
+    btn.style.display = 'none'; // ẩn nút sau khi QR hiển
+    setModalStatus('', '');
+
+    // Bắt đầu tự động kiểm tra thanh toán
+    startPolling(d.payment_ref);
+
+  } catch(e) {
+    setModalStatus('error', '❌ Lỗi kết nối server');
+    btn.disabled = false; btn.textContent = '▶ TẠO ĐƠN HÀNG & HIỆN THỊ QR';
+  }
+}
+
+// ── Step 2 (DEV): Giả lập webhook callback ──
+async function simulatePaid() {
+  if (!currentOrder || !currentOrder.payment_ref) return;
+  const btn = document.getElementById('shop-btn-simulate');
+  btn.disabled = true;
+  btn.textContent = '⏳ Đang xử lý...';
+
+  const ref = currentOrder.payment_ref;
+  const status = 'paid';
+  try {
+    const r = await fetch('/api/shop/webhook', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        payment_ref: ref,
+        status: status,
+        signature: await devSign(ref, status)
+      })
+    });
+    const d = await r.json();
+    if (d.success) {
+      setModalStatus('success', '🎉 Thanh toán thành công! Đã cộng lượt vào tài khoản.');
+      await loadWallet();
+      await loadHistoryShop();
+      showToast('success', '🎉 Mua hàng thành công! Lượt đã được cộng.');
+      setTimeout(() => closePayModal(), 2000);
+    } else {
+      setModalStatus('error', '❌ ' + (d.error || 'Webhook thất bại'));
+    }
+  } catch(e) {
+    setModalStatus('error', '❌ Lỗi kết nối');
+  }
+  btn.disabled = false;
+  btn.textContent = '🧪 [DEV] Giả lập thanh toán thành công';
+}
+
+async function devSign(ref, status) {
+  const msg = `${ref}:${status}`;
+  const key = 'dev-secret-123';
+  const enc = new TextEncoder();
+  const cryptoKey = await crypto.subtle.importKey('raw', enc.encode(key), {name:'HMAC',hash:'SHA-256'}, false, ['sign']);
+  const sig = await crypto.subtle.sign('HMAC', cryptoKey, enc.encode(msg));
+  return Array.from(new Uint8Array(sig)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+// ── Polling: tự động kiểm tra thanh toán mỗi 4 giây ──
+let _pollTimer = null;
+let _pollCount = 0;
+
+function startPolling(paymentRef) {
+  stopPolling();
+  _pollCount = 0;
+  _pollTimer = setInterval(async () => {
+    _pollCount++;
+    // Dừng sau 10 phút (150 lần × 4s)
+    if (_pollCount > 150) {
+      stopPolling();
+      document.getElementById('shop-polling-text').textContent = '⏰ Hết thời gian chờ. Đóng và thử lại nếu bạn đã thanh toán.';
+      document.getElementById('shop-polling-dot').style.background = 'var(--accent)';
+      return;
+    }
+    try {
+      const r = await fetch(`/api/shop/check-status?ref=${encodeURIComponent(paymentRef)}`);
+      const d = await r.json();
+      if (d.success && d.status === 'paid') {
+        stopPolling();
+        // Cập nhật UI thành công
+        document.getElementById('shop-polling-dot').style.background = '#00ff88';
+        document.getElementById('shop-polling-dot').style.animation = 'none';
+        document.getElementById('shop-polling-text').textContent = '✅ Thanh toán xác nhận! Đã cộng lượt vào tài khoản.';
+        document.getElementById('shop-polling-status').style.background = 'rgba(0,255,136,.08)';
+        document.getElementById('shop-polling-status').style.borderColor = 'rgba(0,255,136,.4)';
+        setModalStatus('success', '🎉 Thanh toán thành công! Lượt đã được cộng vào tài khoản.');
+        await loadWallet();
+        await loadHistoryShop();
+        showToast('success', '🎉 Mua hàng thành công! Lượt đã được cộng.');
+        setTimeout(() => closePayModal(), 3000);
+      }
+    } catch(e) { /* im lặng nếu lỗi mạng tạm thời */ }
+  }, 4000);
+}
+
+function stopPolling() {
+  if (_pollTimer) { clearInterval(_pollTimer); _pollTimer = null; }
+}
+
+function copyPayRef() {
+  if (!currentOrder || !currentOrder.payment_ref) return;
+  navigator.clipboard.writeText(currentOrder.payment_ref)
+    .then(() => showToast('success', '✅ Đã copy nội dung chuyển khoản!'))
+    .catch(() => showToast('error', '❌ Không copy được'));
+}
+
+function setModalStatus(type, msg) {
+  const el = document.getElementById('shop-modal-status');
+  if (!el) return;
+  if (!type) { el.className = 'modal-status'; el.textContent = ''; return; }
+  el.className = 'modal-status show ' + type;
+  el.textContent = msg;
+}
+
+function showToast(type, msg) {
+  const wrap = document.getElementById('shop-toast-wrap');
+  if (!wrap) return;
+  const t = document.createElement('div');
+  t.className = 'toast ' + type;
+  t.textContent = msg;
+  wrap.appendChild(t);
+  setTimeout(() => t.remove(), 4200);
+}
+
+// Initialize totals
+updateQtyUI('turns');
+updateQtyUI('lifelines');
+</script>
 </body>
-
 </html>

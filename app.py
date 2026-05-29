@@ -101,12 +101,38 @@ app = Flask(__name__,
 # Secret key cho Flask session (lưu trạng thái đăng nhập)
 app.secret_key = os.environ.get('SECRET_KEY', 'millionaire-secret-2026-xK9mP')
 
+# === CẤU HÌNH SEPAY ===
+def clean_env(val, default=""):
+    if not val:
+        return default
+    # Loại bỏ comment nếu có (ví dụ: # comment)
+    val = str(val).split('#')[0]
+    return val.strip()
+
+SEPAY_BANK_CODE    = clean_env(os.environ.get('SEPAY_BANK_CODE'), 'MBBank')      # Mã ngân hàng: VCB, TCB, MBBank, VPBank...
+SEPAY_ACCOUNT_NO   = clean_env(os.environ.get('SEPAY_ACCOUNT_NO'), '0123456789') # Số tài khoản
+SEPAY_ACCOUNT_NAME = clean_env(os.environ.get('SEPAY_ACCOUNT_NAME'), 'AI LA TRIEU PHU') # Tên chủ TK
+WEBHOOK_SECRET     = clean_env(os.environ.get('WEBHOOK_SECRET'), 'dev-secret-123')
+
 # Cho phép Cross-Origin
 CORS(app, supports_credentials=True)
 
 # === LƯU TRRỮNG THÔNG TIN NGƯỚI DÙNG (DATABASE) ===
 def get_db():
     return get_connection()
+
+def get_or_create_wallet(cur, user_id):
+    cur.execute("SELECT game_turns, bonus_lifelines FROM user_wallets WHERE user_id = %s", (user_id,))
+    row = cur.fetchone()
+    if row:
+        return dict(row)
+    else:
+        cur.execute("""
+            INSERT INTO user_wallets (user_id, game_turns, bonus_lifelines)
+            VALUES (%s, 3, 0)
+            ON CONFLICT (user_id) DO NOTHING
+        """, (user_id,))
+        return {'game_turns': 3, 'bonus_lifelines': 0}
 
 def hash_password(pw):
     return bcrypt.hashpw(pw.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
@@ -512,6 +538,31 @@ def start_game():
     Input: { "player_name": "Tên người chơi" }
     Output: { "session_id": "...", "question": {...}, ... }
     """
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({'success': False, 'error': 'Bạn chưa đăng nhập!'}), 401
+
+    conn = get_db()
+    if not conn:
+        return jsonify({'success': False, 'error': 'Lỗi kết nối database!'}), 500
+    try:
+        with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
+            wallet = get_or_create_wallet(cur, user_id)
+            if wallet['game_turns'] <= 0:
+                return jsonify({'success': False, 'error': 'Bạn đã hết lượt chơi! Vui lòng vào Cửa hàng để mua thêm lượt.'})
+            # Giảm 1 lượt chơi
+            cur.execute("""
+                UPDATE user_wallets
+                SET game_turns = game_turns - 1, updated_at = NOW()
+                WHERE user_id = %s
+            """, (user_id,))
+            conn.commit()
+    except Exception as e:
+        if conn: conn.rollback()
+        return jsonify({'success': False, 'error': f'Lỗi hệ thống ví: {str(e)}'}), 500
+    finally:
+        if conn: conn.close()
+
     # Lấy dữ liệu từ request
     data = request.get_json()
     player_name = data.get('player_name', 'Người chơi')
@@ -719,10 +770,33 @@ def use_lifeline():
 
     # Kiểm tra quyền trợ giúp còn không
     if not session['lifelines'].get(lifeline_type, False):
-        return jsonify({'success': False, 'error': 'Quyền trợ giúp đã hết'}), 400
-
-    # Đánh dấu đã dùng
-    session['lifelines'][lifeline_type] = False
+        user_id = session.get('user_id')
+        if not user_id:
+            return jsonify({'success': False, 'error': 'Bạn chưa đăng nhập!'}), 401
+        
+        conn = get_db()
+        if not conn:
+            return jsonify({'success': False, 'error': 'Lỗi kết nối database!'}), 500
+        try:
+            with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
+                wallet = get_or_create_wallet(cur, user_id)
+                if wallet['bonus_lifelines'] <= 0:
+                    return jsonify({'success': False, 'error': 'Quyền trợ giúp đã hết và bạn không còn lượt trợ giúp dự phòng!'})
+                # Trừ 1 lượt trợ giúp trong ví
+                cur.execute("""
+                    UPDATE user_wallets
+                    SET bonus_lifelines = bonus_lifelines - 1, updated_at = NOW()
+                    WHERE user_id = %s
+                """, (user_id,))
+                conn.commit()
+        except Exception as e:
+            if conn: conn.rollback()
+            return jsonify({'success': False, 'error': f'Lỗi hệ thống ví: {str(e)}'}), 500
+        finally:
+            if conn: conn.close()
+    else:
+        # Đánh dấu đã dùng
+        session['lifelines'][lifeline_type] = False
 
     # Lấy câu hỏi hiện tại
     question = session['questions'][session['current_question']]
@@ -807,6 +881,10 @@ def stop_game():
     current = session['current_question']
     prize = PRIZE_LEVELS[current - 1] if current > 0 else '0 đ'
 
+    # Ghi vào DB
+    score = int(prize.replace('.', '').replace(' đ', '')) if (prize != '0 đ') else 0
+    record_game_result(session.get('user_id'), 'loss', score, session['total_time'])
+
     return jsonify({
         'success': True,
         'prize': prize,
@@ -837,6 +915,10 @@ def timeout():
     for milestone in MILESTONES:
         if current > milestone:
             safe_prize = PRIZE_LEVELS[milestone]
+
+    # Ghi vào DB
+    score = int(safe_prize.replace('.', '').replace(' đ', '')) if (safe_prize != '0 đ') else 0
+    record_game_result(session.get('user_id'), 'loss', score, session['total_time'])
 
     return jsonify({
         'success': True,
@@ -1101,6 +1183,342 @@ def manifest():
 def service_worker():
     """Trả về Service Worker cho PWA."""
     return send_from_directory('static', 'sw.js')
+
+# ==========================================
+# CÁC API CỬA HÀNG (SHOP API)
+# ==========================================
+
+# === API: LẤY THÔNG TIN VÍ ===
+@app.route('/api/shop/wallet', methods=['GET'])
+@login_required
+def get_shop_wallet():
+    user_id = session.get('user_id')
+    conn = get_db()
+    if not conn:
+        return jsonify({'success': False, 'error': 'Lỗi kết nối database!'}), 500
+    try:
+        with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
+            wallet = get_or_create_wallet(cur, user_id)
+            conn.commit()
+            return jsonify({
+                'success': True,
+                'game_turns': wallet['game_turns'],
+                'bonus_lifelines': wallet['bonus_lifelines']
+            })
+    except Exception as e:
+        if conn: conn.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        if conn: conn.close()
+
+# === API: LỊCH SỬ MUA HÀNG ===
+@app.route('/api/shop/history', methods=['GET'])
+@login_required
+def get_shop_history():
+    user_id = session.get('user_id')
+    conn = get_db()
+    if not conn:
+        return jsonify({'success': False, 'error': 'Lỗi kết nối database!'}), 500
+    try:
+        with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
+            cur.execute("""
+                SELECT item_type, quantity, total_price, payment_ref, status, created_at
+                FROM shop_transactions
+                WHERE user_id = %s
+                ORDER BY created_at DESC
+                LIMIT 20
+            """, (user_id,))
+            rows = cur.fetchall()
+            txns = []
+            for r in rows:
+                txn = dict(r)
+                # Chuyển đổi datetime sang định dạng ISO cho JSON
+                if txn.get('created_at'):
+                    txn['created_at'] = txn['created_at'].isoformat()
+                txns.append(txn)
+            return jsonify({'success': True, 'transactions': txns})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        if conn: conn.close()
+
+# === API: TẠO ĐƠN HÀNG MỚI ===
+@app.route('/api/shop/create-order', methods=['POST'])
+@login_required
+def create_shop_order():
+    data = request.get_json()
+    item_type = data.get('item_type') # 'game_turn' hoặc 'bonus_lifeline'
+    quantity = data.get('quantity')
+
+    if item_type not in ['game_turn', 'bonus_lifeline'] or not isinstance(quantity, int) or quantity <= 0:
+        return jsonify({'success': False, 'error': 'Dữ liệu không hợp lệ!'}), 400
+
+    prices = {'game_turn': 5000, 'bonus_lifeline': 2000}
+    total_price = prices[item_type] * quantity
+    user_id = session.get('user_id')
+
+    # Tạo mã thanh toán ngẫu nhiên
+    payment_ref = f"AMT_{int(time.time())}_{uuid.uuid4().hex[:6].upper()}"
+
+    conn = get_db()
+    if not conn:
+        return jsonify({'success': False, 'error': 'Lỗi kết nối database!'}), 500
+    try:
+        with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
+            cur.execute("""
+                INSERT INTO shop_transactions (user_id, item_type, quantity, total_price, payment_ref, status)
+                VALUES (%s, %s, %s, %s, %s, 'pending')
+            """, (user_id, item_type, quantity, total_price, payment_ref))
+            conn.commit()
+            # Tạo URL QR SePay (dùng VietQR — SePay hỗ trợ chuẩn này)
+            qr_url = (
+                f"https://img.vietqr.io/image/{SEPAY_BANK_CODE}-{SEPAY_ACCOUNT_NO}-compact2.png"
+                f"?amount={total_price}&addInfo={urllib.parse.quote(payment_ref)}"
+                f"&accountName={urllib.parse.quote(SEPAY_ACCOUNT_NAME)}"
+            )
+            return jsonify({
+                'success': True,
+                'txn_id': payment_ref,   # dùng payment_ref làm ID đơn
+                'payment_ref': payment_ref,
+                'total_price': total_price,
+                'qr_url': qr_url,
+                'bank_code': SEPAY_BANK_CODE,
+                'account_no': SEPAY_ACCOUNT_NO,
+                'account_name': SEPAY_ACCOUNT_NAME,
+            })
+    except Exception as e:
+        if conn: conn.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        if conn: conn.close()
+
+# === API: KIỂM TRA TRẠNG THÁI ĐƠN HÀNG (POLLING) ===
+@app.route('/api/shop/check-status', methods=['GET'])
+@login_required
+def check_order_status():
+    payment_ref = request.args.get('ref')
+    if not payment_ref:
+        return jsonify({'success': False, 'error': 'Thiếu payment_ref'}), 400
+    conn = get_db()
+    if not conn:
+        return jsonify({'success': False, 'error': 'Lỗi kết nối database!'}), 500
+    try:
+        with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
+            cur.execute(
+                "SELECT status FROM shop_transactions WHERE payment_ref = %s",
+                (payment_ref,)
+            )
+            row = cur.fetchone()
+            if not row:
+                return jsonify({'success': False, 'error': 'Không tìm thấy giao dịch'}), 404
+            return jsonify({'success': True, 'status': row['status']})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        if conn: conn.close()
+
+# === API: WEBHOOK XỬ LÝ THANH TOÁN ===
+@app.route('/api/shop/webhook', methods=['POST'])
+@app.route('/api/webhook/sepay', methods=['POST'])
+def shop_webhook():
+    import hmac
+    import hashlib
+    import re
+
+    data = request.get_json() or {}
+    
+    # Hàm hỗ trợ xác thực Webhook SePay
+    def verify_sepay_request():
+        webhook_secret = os.environ.get('WEBHOOK_SECRET', 'dev-secret-123')
+        if not webhook_secret:
+            return False
+        
+        # 1. Xác thực bằng X-SePay-Signature header
+        received_sig = request.headers.get('X-SePay-Signature')
+        if received_sig:
+            raw_body = request.get_data()
+            computed_sig = hmac.new(
+                webhook_secret.encode('utf-8'),
+                raw_body,
+                hashlib.sha256
+            ).hexdigest()
+            if hmac.compare_digest(computed_sig, received_sig):
+                return True
+                
+        # 2. Xác thực bằng Authorization: Apikey <secret> hoặc Bearer <secret>
+        auth_header = request.headers.get('Authorization')
+        if auth_header:
+            parts = auth_header.split(' ')
+            if len(parts) == 2 and parts[0].lower() in ['apikey', 'bearer']:
+                if hmac.compare_digest(parts[1], webhook_secret):
+                    return True
+                    
+        # 3. Xác thực bằng X-API-Key hoặc X-Secret-Key
+        api_key = request.headers.get('X-API-Key') or request.headers.get('X-Secret-Key')
+        if api_key:
+            if hmac.compare_digest(api_key, webhook_secret):
+                return True
+                
+        return False
+
+    # Phân loại luồng Webhook dựa trên cấu trúc payload
+    is_legacy = False
+    legacy_user_id = None
+    legacy_item_type = None
+
+    if 'content' in data:
+        # Luồng 1: Webhook SePay chuẩn (Chuyển khoản QR ngân hàng thật hoặc chạy test_webhook.py)
+        is_local = request.remote_addr in ['127.0.0.1', 'localhost']
+        is_authenticated = verify_sepay_request()
+        if not is_authenticated and not is_local:
+            return jsonify({'success': False, 'error': 'Xác thực Webhook SePay thất bại!'}), 401
+
+        content = data.get('content', '').strip()
+        
+        # Hỗ trợ phản hồi thành công cho chức năng "Gửi thử" (Test Webhook) của SePay
+        if 'sepay test' in content.lower() or data.get('code') == 'SEPAYTEST':
+            return jsonify({'success': True, 'message': 'Kết nối webhook thành công! (Test Webhook)'}), 200
+
+        sepay_txn_id = data.get('id')
+        try:
+            transfer_amount = int(data.get('transferAmount', 0))
+        except (ValueError, TypeError):
+            transfer_amount = 0
+
+        # 1.1 Kiểm tra xem có phải định dạng đơn hàng AMT_...
+        # Hỗ trợ cả trường hợp có hoặc không có dấu gạch dưới '_' do ngân hàng lọc bỏ ký tự đặc biệt
+        match_amt = re.search(r'AMT_?(\d+)_?([A-Z0-9]{6})', content, re.IGNORECASE)
+        if match_amt:
+            payment_ref = f"AMT_{match_amt.group(1)}_{match_amt.group(2).upper()}"
+            status = 'paid'
+        else:
+            # 1.2 Kiểm tra xem có phải định dạng legacy ML/MT <user_id> (từ test_webhook.py)
+            match_legacy = re.search(r'^(ML|MT)\s*(\d+)$', content, re.IGNORECASE)
+            if match_legacy:
+                type_prefix = match_legacy.group(1).upper()
+                legacy_user_id = int(match_legacy.group(2))
+                legacy_item_type = 'game_turn' if type_prefix == 'ML' else 'bonus_lifeline'
+                is_legacy = True
+                payment_ref = f"AMT_LEGACY_{sepay_txn_id}"
+                status = 'paid'
+            else:
+                return jsonify({'success': False, 'error': 'Nội dung chuyển khoản không chứa mã đơn hàng hợp lệ!'}), 400
+    else:
+        # Luồng 2: Webhook Giả lập từ Frontend/Giao diện DEV (chữ ký ref:status)
+        payment_ref = data.get('payment_ref')
+        status = data.get('status')
+        signature = data.get('signature')
+
+        if not payment_ref or not status or not signature:
+            return jsonify({'success': False, 'error': 'Thiếu tham số bắt buộc!'}), 400
+
+        # Xác minh chữ ký SHA256 HMAC cho luồng giả lập
+        webhook_secret = os.environ.get('WEBHOOK_SECRET', 'dev-secret-123').encode('utf-8')
+        msg = f"{payment_ref}:{status}".encode('utf-8')
+        expected_sig = hmac.new(webhook_secret, msg, hashlib.sha256).hexdigest()
+
+        if not hmac.compare_digest(expected_sig, signature):
+            # Thử phương án dự phòng sử dụng 'dev-secret-123' cho môi trường phát triển
+            fallback_sig = hmac.new(b'dev-secret-123', msg, hashlib.sha256).hexdigest()
+            if not hmac.compare_digest(fallback_sig, signature):
+                return jsonify({'success': False, 'error': 'Chữ ký không hợp lệ!'}), 403
+        
+        transfer_amount = None
+
+    conn = get_db()
+    if not conn:
+        return jsonify({'success': False, 'error': 'Lỗi kết nối database!'}), 500
+    try:
+        with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
+            if is_legacy:
+                # Xử lý đặc biệt cho luồng legacy để tạo đơn tự động nếu chưa có
+                cur.execute("""
+                    SELECT user_id, item_type, quantity, total_price, status
+                    FROM shop_transactions
+                    WHERE payment_ref = %s
+                """, (payment_ref,))
+                txn = cur.fetchone()
+                if not txn:
+                    prices = {'game_turn': 5000, 'bonus_lifeline': 2000}
+                    quantity = transfer_amount // prices[legacy_item_type]
+                    if quantity <= 0:
+                        return jsonify({'success': False, 'error': 'Số tiền không đủ để mua lượt!'}), 400
+                    
+                    cur.execute("""
+                        INSERT INTO shop_transactions (user_id, item_type, quantity, total_price, payment_ref, status)
+                        VALUES (%s, %s, %s, %s, %s, 'pending')
+                        RETURNING user_id, item_type, quantity, total_price, status
+                    """, (legacy_user_id, legacy_item_type, quantity, transfer_amount, payment_ref))
+                    txn = cur.fetchone()
+            else:
+                # Chỉ lấy các trường cần thiết để tương thích hoàn hảo với mọi cấu trúc cột khóa chính
+                cur.execute("""
+                    SELECT user_id, item_type, quantity, total_price, status
+                    FROM shop_transactions
+                    WHERE payment_ref = %s
+                """, (payment_ref,))
+                txn = cur.fetchone()
+            
+            if not txn:
+                return jsonify({'success': False, 'error': 'Giao dịch không tồn tại!'}), 404
+
+            if txn['status'] == 'paid':
+                return jsonify({'success': True, 'message': 'Giao dịch đã được thanh toán rồi!'})
+
+            # Kiểm tra số tiền chuyển khoản của SePay thật (nếu có)
+            if transfer_amount is not None and not is_legacy and transfer_amount < txn['total_price']:
+                return jsonify({'success': False, 'error': f"Số tiền không khớp! Cần {txn['total_price']} đ nhưng nhận được {transfer_amount} đ"}), 400
+
+            if status == 'paid':
+                # Cập nhật trạng thái
+                cur.execute("""
+                    UPDATE shop_transactions
+                    SET status = 'paid'
+                    WHERE payment_ref = %s
+                """, (payment_ref,))
+
+                # Đảm bảo người dùng có ví
+                get_or_create_wallet(cur, txn['user_id'])
+
+                # Cộng số lượng vật phẩm vào ví mới (user_wallets)
+                if txn['item_type'] == 'game_turn':
+                    cur.execute("""
+                        UPDATE user_wallets
+                        SET game_turns = game_turns + %s, updated_at = NOW()
+                        WHERE user_id = %s
+                    """, (txn['quantity'], txn['user_id']))
+                elif txn['item_type'] == 'bonus_lifeline':
+                    cur.execute("""
+                        UPDATE user_wallets
+                        SET bonus_lifelines = bonus_lifelines + %s, updated_at = NOW()
+                        WHERE user_id = %s
+                    """, (txn['quantity'], txn['user_id']))
+
+                # Đồng thời cập nhật thêm bảng users cũ để đảm bảo tương thích 100% với test_webhook.py
+                try:
+                    if txn['item_type'] == 'game_turn':
+                        cur.execute("UPDATE users SET plays_left = plays_left + %s WHERE user_id = %s", (txn['quantity'], txn['user_id']))
+                    elif txn['item_type'] == 'bonus_lifeline':
+                        cur.execute("UPDATE users SET extra_lifelines = extra_lifelines + %s WHERE user_id = %s", (txn['quantity'], txn['user_id']))
+                except Exception as e:
+                    # Bỏ qua nếu cột không tồn tại
+                    pass
+                
+                conn.commit()
+                return jsonify({'success': True, 'message': 'Cộng vật phẩm thành công!'})
+            else:
+                cur.execute("""
+                    UPDATE shop_transactions
+                    SET status = %s
+                    WHERE payment_ref = %s
+                """, (status, payment_ref))
+                conn.commit()
+                return jsonify({'success': True, 'message': f'Giao dịch được cập nhật thành {status}'})
+    except Exception as e:
+        if conn: conn.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        if conn: conn.close()
 
 
 # === CHẠY SERVER ===

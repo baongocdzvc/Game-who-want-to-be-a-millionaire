@@ -107,7 +107,20 @@ async function startGame() {
             displayQuestion(data.question, data.question_number);
             addBotMessage(`Chào mừng ${playerName} đến với Ai Là Triệu Phú! 🎉 Chúc may mắn!`);
         } else {
-            alert('⚠️ Lỗi: ' + (data.error || 'Server không thể khởi tạo game.'));
+            if (data.error && data.error.includes('hết lượt chơi')) {
+                showModal('HẾT LƯỢT CHƠI 🎮', `
+                    <div style="text-align:center; padding:10px 0;">
+                        <p style="margin-bottom:20px; font-size:1.05rem; line-height:1.6; color:rgba(255,255,255,0.85);">
+                            Bạn đã sử dụng hết lượt chơi miễn phí của mình. Hãy ghé qua cửa hàng để nhận thêm lượt hoặc nạp thêm nhé!
+                        </p>
+                        <button class="btn-start" onclick="closeModal(); openShop();" style="background: linear-gradient(135deg, var(--purple), var(--accent)); width:100%; border:none; padding:12px; font-family:'Outfit',sans-serif; font-weight:900; border-radius:9999px; color:#fff; cursor:pointer;">
+                            🛒 GHÉ CỬA HÀNG MUA LƯỢT
+                        </button>
+                    </div>
+                `);
+            } else {
+                alert('⚠️ Lỗi: ' + (data.error || 'Server không thể khởi tạo game.'));
+            }
         }
     } catch (err) {
         // Lỗi kết nối server hoặc lỗi mạng
@@ -245,11 +258,32 @@ async function selectAnswer(index) {
     }, 2000);
 }
 
-// === QUYỀN TRỢ GIÚP - GỌI API /api/game/lifeline ===
 async function useLifeline(type) {
     if (isAnswered) return;
     const btn = document.getElementById('lifeline-' + type);
-    if (btn.classList.contains('used')) return;
+    
+    if (btn.classList.contains('used')) {
+        try {
+            const wRes = await fetch(API_URL + '/api/shop/wallet');
+            const wData = await wRes.json();
+            if (wData.success) {
+                const bonusCount = wData.bonus_lifelines;
+                if (bonusCount <= 0) {
+                    addBotMessage('⚠️ Bạn đã dùng quyền trợ giúp này và không còn lượt trợ giúp dự phòng. Hãy mua thêm tại cửa hàng!');
+                    alert('⚠️ Bạn đã dùng quyền trợ giúp này và không còn lượt trợ giúp dự phòng nào trong ví.');
+                    return;
+                }
+                const conf = confirm(`Bạn đã dùng quyền trợ giúp này. Bạn có muốn sử dụng 1 lượt trợ giúp dự phòng từ ví không? (Còn lại: ${bonusCount} lượt)`);
+                if (!conf) return;
+            } else {
+                alert('Không thể tải ví của bạn!');
+                return;
+            }
+        } catch(e) {
+            alert('Lỗi kết nối ví!');
+            return;
+        }
+    }
 
     try {
         const res = await fetch(API_URL + '/api/game/lifeline', {
@@ -374,6 +408,9 @@ function resetGame() {
 function switchScreen(id) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     document.getElementById(id).classList.add('active');
+    if ((id === 'welcome-screen' || id === 'shop-screen') && typeof loadWallet === 'function') {
+        loadWallet();
+    }
 }
 
 // === HIỆU ỨNG PHÁO GIẤY ===
