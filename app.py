@@ -1317,6 +1317,66 @@ def check_order_status():
     finally:
         if conn: conn.close()
 
+# === API: KIỂM TRA TRẠNG THÁI HỆ THỐNG (DEBUG) ===
+APP_VERSION = "v3-regex-fix-20260530"
+
+@app.route('/api/debug/status', methods=['GET'])
+def debug_status():
+    """Endpoint chẩn đoán: kiểm tra phiên bản code, DB, và regex."""
+    import re
+    result = {
+        'version': APP_VERSION,
+        'db_connected': False,
+        'tables_exist': False,
+        'regex_test': None,
+        'recent_transactions': []
+    }
+    # Test DB
+    conn = get_db()
+    if conn:
+        result['db_connected'] = True
+        try:
+            with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
+                cur.execute("SELECT COUNT(*) FROM shop_transactions")
+                result['tables_exist'] = True
+                count = cur.fetchone()[0]
+                # Lấy 5 giao dịch gần nhất
+                cur.execute("""
+                    SELECT payment_ref, status, item_type, quantity, total_price, created_at
+                    FROM shop_transactions
+                    ORDER BY created_at DESC LIMIT 5
+                """)
+                for row in cur.fetchall():
+                    result['recent_transactions'].append({
+                        'ref': row['payment_ref'],
+                        'status': row['status'],
+                        'item': row['item_type'],
+                        'qty': row['quantity'],
+                        'price': row['total_price'],
+                        'created': str(row['created_at'])
+                    })
+        except Exception as e:
+            result['db_error'] = str(e)
+        finally:
+            conn.close()
+    
+    # Test regex against sample content
+    test_content = "NHAN TU 06300420066666 TRACE 440721 ND AMT1780089184466B9A"
+    match = re.search(r'AMT[\s_-]?(\d{10})[\s_-]?([A-Z0-9]{6})', test_content, re.IGNORECASE)
+    if match:
+        result['regex_test'] = {
+            'input': test_content,
+            'matched': True,
+            'payment_ref': f"AMT_{match.group(1)}_{match.group(2).upper()}"
+        }
+    else:
+        result['regex_test'] = {
+            'input': test_content,
+            'matched': False
+        }
+    
+    return jsonify(result)
+
 # === API: WEBHOOK XỬ LÝ THANH TOÁN ===
 @app.route('/api/shop/webhook', methods=['POST'])
 @app.route('/api/webhook/sepay', methods=['POST'])
@@ -1332,7 +1392,7 @@ def shop_webhook():
     
     # Hàm hỗ trợ xác thực Webhook SePay
     def verify_sepay_request():
-        webhook_secret = os.environ.get('WEBHOOK_SECRET', 'dev-secret-123')
+        webhook_secret = os.environ.get('WEBHOOK_SECRET', 'dev-secret-123').strip()
         print(f"🔒 [Xác thực SePay] Webhook secret cấu hình: {'***' + webhook_secret[-5:] if webhook_secret else 'TRỐNG'}")
         
         # 1. Xác thực bằng X-SePay-Signature header
