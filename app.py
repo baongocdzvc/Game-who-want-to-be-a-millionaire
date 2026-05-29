@@ -1326,12 +1326,14 @@ def shop_webhook():
     import re
 
     data = request.get_json() or {}
+    print(f"\n📢 [SEPAY WEBHOOK] Nhận yêu cầu Webhook mới!")
+    print(f"👉 IP Người gọi: {request.remote_addr}")
+    print(f"👉 Payload nhận được: {data}")
     
     # Hàm hỗ trợ xác thực Webhook SePay
     def verify_sepay_request():
         webhook_secret = os.environ.get('WEBHOOK_SECRET', 'dev-secret-123')
-        if not webhook_secret:
-            return False
+        print(f"🔒 [Xác thực SePay] Webhook secret cấu hình: {'***' + webhook_secret[-5:] if webhook_secret else 'TRỐNG'}")
         
         # 1. Xác thực bằng X-SePay-Signature header
         received_sig = request.headers.get('X-SePay-Signature')
@@ -1342,23 +1344,32 @@ def shop_webhook():
                 raw_body,
                 hashlib.sha256
             ).hexdigest()
+            print(f"🔍 [Xác thực] Header X-SePay-Signature nhận được: {received_sig[:8]}...")
+            print(f"🔍 [Xác thực] Chữ ký tính toán tương ứng: {computed_sig[:8]}...")
             if hmac.compare_digest(computed_sig, received_sig):
+                print("✅ [Xác thực] Chữ ký X-SePay-Signature hợp lệ!")
                 return True
                 
         # 2. Xác thực bằng Authorization: Apikey <secret> hoặc Bearer <secret>
         auth_header = request.headers.get('Authorization')
         if auth_header:
             parts = auth_header.split(' ')
+            print(f"🔍 [Xác thực] Header Authorization: {parts[0]}")
             if len(parts) == 2 and parts[0].lower() in ['apikey', 'bearer']:
+                print(f"🔍 [Xác thực] So khớp token: {parts[1][:5]}...")
                 if hmac.compare_digest(parts[1], webhook_secret):
+                    print("✅ [Xác thực] Token Authorization hợp lệ!")
                     return True
                     
         # 3. Xác thực bằng X-API-Key hoặc X-Secret-Key
         api_key = request.headers.get('X-API-Key') or request.headers.get('X-Secret-Key')
         if api_key:
+            print(f"🔍 [Xác thực] Header X-API-Key/X-Secret-Key nhận được: {api_key[:5]}...")
             if hmac.compare_digest(api_key, webhook_secret):
+                print("✅ [Xác thực] API Key hợp lệ!")
                 return True
                 
+        print("❌ [Xác thực] Tất cả phương thức xác thực SePay đều thất bại!")
         return False
 
     # Phân loại luồng Webhook dựa trên cấu trúc payload
@@ -1367,16 +1378,19 @@ def shop_webhook():
     legacy_item_type = None
 
     if 'content' in data:
-        # Luồng 1: Webhook SePay chuẩn (Chuyển khoản QR ngân hàng thật hoặc chạy test_webhook.py)
+        print("📡 [Luồng Webhook] Nhận diện định dạng SePay chuẩn (chứa trường 'content')")
         is_local = request.remote_addr in ['127.0.0.1', 'localhost']
         is_authenticated = verify_sepay_request()
         if not is_authenticated and not is_local:
+            print("❌ [Xác thực] Yêu cầu webhook SePay bị từ chối vì xác thực thất bại!")
             return jsonify({'success': False, 'error': 'Xác thực Webhook SePay thất bại!'}), 401
 
         content = data.get('content', '').strip()
+        print(f"📝 Nội dung chuyển khoản (Memo): '{content}'")
         
         # Hỗ trợ phản hồi thành công cho chức năng "Gửi thử" (Test Webhook) của SePay
         if 'sepay test' in content.lower() or data.get('code') == 'SEPAYTEST':
+            print("🔔 [Test Webhook] Nhận gói tin gửi thử thành công!")
             return jsonify({'success': True, 'message': 'Kết nối webhook thành công! (Test Webhook)'}), 200
 
         sepay_txn_id = data.get('id')
@@ -1386,11 +1400,12 @@ def shop_webhook():
             transfer_amount = 0
 
         # 1.1 Kiểm tra xem có phải định dạng đơn hàng AMT_...
-        # Hỗ trợ cả trường hợp có hoặc không có dấu gạch dưới '_' do ngân hàng lọc bỏ ký tự đặc biệt
-        match_amt = re.search(r'AMT_?(\d+)_?([A-Z0-9]{6})', content, re.IGNORECASE)
+        # Hỗ trợ cả trường hợp có hoặc không có dấu gạch dưới '_', dấu cách hoặc dấu gạch ngang do ngân hàng/người dùng lọc bỏ
+        match_amt = re.search(r'AMT[\s_-]?(\d+)[\s_-]?([A-Z0-9]{6})', content, re.IGNORECASE)
         if match_amt:
             payment_ref = f"AMT_{match_amt.group(1)}_{match_amt.group(2).upper()}"
             status = 'paid'
+            print(f"🎯 [Regex] Trích xuất thành công mã đơn hàng: {payment_ref}")
         else:
             # 1.2 Kiểm tra xem có phải định dạng legacy ML/MT <user_id> (từ test_webhook.py)
             match_legacy = re.search(r'^(ML|MT)\s*(\d+)$', content, re.IGNORECASE)
@@ -1401,15 +1416,18 @@ def shop_webhook():
                 is_legacy = True
                 payment_ref = f"AMT_LEGACY_{sepay_txn_id}"
                 status = 'paid'
+                print(f"🎯 [Regex Legacy] Trích xuất legacy user_id={legacy_user_id}, loại={legacy_item_type}")
             else:
+                print("❌ [Lỗi] Nội dung chuyển khoản không chứa mã đơn hàng hợp lệ!")
                 return jsonify({'success': False, 'error': 'Nội dung chuyển khoản không chứa mã đơn hàng hợp lệ!'}), 400
     else:
-        # Luồng 2: Webhook Giả lập từ Frontend/Giao diện DEV (chữ ký ref:status)
+        print("📡 [Luồng Webhook] Nhận diện định dạng Giả lập (Simulator)")
         payment_ref = data.get('payment_ref')
         status = data.get('status')
         signature = data.get('signature')
 
         if not payment_ref or not status or not signature:
+            print("❌ [Lỗi] Định dạng giả lập thiếu tham số bắt buộc!")
             return jsonify({'success': False, 'error': 'Thiếu tham số bắt buộc!'}), 400
 
         # Xác minh chữ ký SHA256 HMAC cho luồng giả lập
@@ -1421,12 +1439,14 @@ def shop_webhook():
             # Thử phương án dự phòng sử dụng 'dev-secret-123' cho môi trường phát triển
             fallback_sig = hmac.new(b'dev-secret-123', msg, hashlib.sha256).hexdigest()
             if not hmac.compare_digest(fallback_sig, signature):
+                print("❌ [Lỗi] Chữ ký giả lập không hợp lệ!")
                 return jsonify({'success': False, 'error': 'Chữ ký không hợp lệ!'}), 403
         
         transfer_amount = None
 
     conn = get_db()
     if not conn:
+        print("❌ [Lỗi] Không thể kết nối tới cơ sở dữ liệu!")
         return jsonify({'success': False, 'error': 'Lỗi kết nối database!'}), 500
     try:
         with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
@@ -1442,6 +1462,7 @@ def shop_webhook():
                     prices = {'game_turn': 5000, 'bonus_lifeline': 2000}
                     quantity = transfer_amount // prices[legacy_item_type]
                     if quantity <= 0:
+                        print("❌ [Lỗi] Số tiền gửi không đủ mua sản phẩm!")
                         return jsonify({'success': False, 'error': 'Số tiền không đủ để mua lượt!'}), 400
                     
                     cur.execute("""
@@ -1460,13 +1481,18 @@ def shop_webhook():
                 txn = cur.fetchone()
             
             if not txn:
+                print(f"❌ [Lỗi] Đơn hàng có mã {payment_ref} không tồn tại trong database!")
                 return jsonify({'success': False, 'error': 'Giao dịch không tồn tại!'}), 404
 
+            print(f"📦 Tìm thấy đơn hàng trong Database: User={txn['user_id']}, Sản phẩm={txn['item_type']}, Số lượng={txn['quantity']}, Giá trị={txn['total_price']} đ, Trạng thái={txn['status']}")
+
             if txn['status'] == 'paid':
+                print("ℹ️ Đơn hàng này đã được cộng vật phẩm thành công trước đó (bỏ qua).")
                 return jsonify({'success': True, 'message': 'Giao dịch đã được thanh toán rồi!'})
 
             # Kiểm tra số tiền chuyển khoản của SePay thật (nếu có)
             if transfer_amount is not None and not is_legacy and transfer_amount < txn['total_price']:
+                print(f"❌ [Lỗi] Số tiền chuyển khoản không khớp! Đơn hàng: {txn['total_price']} đ, Chuyển thực tế: {transfer_amount} đ")
                 return jsonify({'success': False, 'error': f"Số tiền không khớp! Cần {txn['total_price']} đ nhưng nhận được {transfer_amount} đ"}), 400
 
             if status == 'paid':
@@ -1505,6 +1531,7 @@ def shop_webhook():
                     pass
                 
                 conn.commit()
+                print(f"🎉 [Thành công] Đã cộng {txn['quantity']} {txn['item_type']} cho User_id={txn['user_id']}!")
                 return jsonify({'success': True, 'message': 'Cộng vật phẩm thành công!'})
             else:
                 cur.execute("""
@@ -1513,9 +1540,11 @@ def shop_webhook():
                     WHERE payment_ref = %s
                 """, (status, payment_ref))
                 conn.commit()
+                print(f"ℹ️ Cập nhật trạng thái đơn hàng {payment_ref} thành {status}")
                 return jsonify({'success': True, 'message': f'Giao dịch được cập nhật thành {status}'})
     except Exception as e:
         if conn: conn.rollback()
+        print(f"❌ [Lỗi Hệ Thống] Exception trong shop_webhook: {str(e)}")
         return jsonify({'success': False, 'error': str(e)}), 500
     finally:
         if conn: conn.close()
