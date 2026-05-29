@@ -3,3 +3,5 @@ flask==3.1.1          # Framework web Python đơn giản
 flask-cors==5.0.1     # Cho phép frontend gọi API từ domain khác
 google-genai
 python-dotenv
+gunicorn
+psycopg2-binary
