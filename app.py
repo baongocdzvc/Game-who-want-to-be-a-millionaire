@@ -1521,6 +1521,20 @@ def shop_webhook():
         if conn: conn.close()
 
 
+# === KHỞI TẠO DATABASE KHI KHỞI ĐỘNG (Dành cho cả Render / Gunicorn) ===
+try:
+    with app.app_context():
+        conn = get_connection()
+        if conn:
+            create_schema(conn)
+            conn.close()
+            print("✅ Đã kiểm tra và khởi tạo database schema thành công!")
+        else:
+            print("❌ Không thể kết nối database để khởi tạo schema!")
+except Exception as db_err:
+    print(f"❌ Lỗi khởi tạo database schema: {db_err}")
+
+
 # === CHẠY SERVER ===
 if __name__ == '__main__':
     print("=" * 50)
@@ -1533,12 +1547,6 @@ if __name__ == '__main__':
     # host='0.0.0.0' = cho phép truy cập từ thiết bị khác trong cùng mạng WiFi
     # debug=True = tự động reload khi sửa code
     
-    # Khởi tạo database nếu chưa có table
-    with app.app_context():
-        conn = get_connection()
-        if conn:
-            create_schema(conn)
-            conn.close()
-
     app.run(host='0.0.0.0', port=5001, debug=True)
+
 
