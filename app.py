@@ -1432,17 +1432,23 @@ def debug_transaction(ref):
                 txn['created_at'] = str(txn['created_at'])
                 txn['updated_at'] = str(txn['updated_at'])
                 
-                # Lấy cả ví người dùng
-                cur.execute("SELECT * FROM user_wallets WHERE user_id = %s", (txn['user_id'],))
-                w_row = cur.fetchone()
-                wallet = dict(w_row) if w_row else None
-                if wallet:
-                    wallet['updated_at'] = str(wallet['updated_at'])
+                wallet = None
+                try:
+                    cur.execute("SELECT * FROM user_wallets WHERE user_id = %s", (txn['user_id'],))
+                    w_row = cur.fetchone()
+                    wallet = dict(w_row) if w_row else None
+                    if wallet:
+                        wallet['updated_at'] = str(wallet['updated_at'])
+                except Exception as we:
+                    wallet = {'error_fetching_wallet': str(we)}
                 
-                # Lấy cả bảng users để so sánh
-                cur.execute("SELECT user_id, username, email, plays_left, extra_lifelines FROM users WHERE user_id = %s", (txn['user_id'],))
-                u_row = cur.fetchone()
-                user = dict(u_row) if u_row else None
+                user = None
+                try:
+                    cur.execute("SELECT user_id, username, email FROM users WHERE user_id = %s", (txn['user_id'],))
+                    u_row = cur.fetchone()
+                    user = dict(u_row) if u_row else None
+                except Exception as ue:
+                    user = {'error_fetching_user': str(ue)}
                 
                 return jsonify({
                     'success': True,
