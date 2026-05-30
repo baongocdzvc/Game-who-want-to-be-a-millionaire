@@ -1416,6 +1416,47 @@ def debug_webhooks():
             conn.close()
     return jsonify(result)
 
+# === API: CHI TIẾT GIAO DỊCH (DEBUG) ===
+@app.route('/api/debug/transaction/<ref>', methods=['GET'])
+def debug_transaction(ref):
+    """Endpoint chẩn đoán: xem chi tiết trạng thái của giao dịch và ví."""
+    conn = get_db()
+    if not conn:
+        return jsonify({'error': 'No connection'}), 500
+    try:
+        with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
+            cur.execute("SELECT * FROM shop_transactions WHERE payment_ref = %s", (ref,))
+            row = cur.fetchone()
+            if row:
+                txn = dict(row)
+                txn['created_at'] = str(txn['created_at'])
+                txn['updated_at'] = str(txn['updated_at'])
+                
+                # Lấy cả ví người dùng
+                cur.execute("SELECT * FROM user_wallets WHERE user_id = %s", (txn['user_id'],))
+                w_row = cur.fetchone()
+                wallet = dict(w_row) if w_row else None
+                if wallet:
+                    wallet['updated_at'] = str(wallet['updated_at'])
+                
+                # Lấy cả bảng users để so sánh
+                cur.execute("SELECT user_id, username, email, plays_left, extra_lifelines FROM users WHERE user_id = %s", (txn['user_id'],))
+                u_row = cur.fetchone()
+                user = dict(u_row) if u_row else None
+                
+                return jsonify({
+                    'success': True,
+                    'transaction': txn,
+                    'wallet': wallet,
+                    'user': user
+                })
+            else:
+                return jsonify({'success': False, 'error': f'Transaction {ref} not found'}), 404
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        conn.close()
+
 # === API: WEBHOOK XỬ LÝ THANH TOÁN ===
 @app.route('/api/shop/webhook', methods=['POST'])
 @app.route('/api/webhook/sepay', methods=['POST'])
