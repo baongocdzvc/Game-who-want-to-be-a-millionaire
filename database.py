@@ -123,6 +123,22 @@ CREATE TABLE IF NOT EXISTS shop_transactions (
     updated_at     TIMESTAMP    DEFAULT CURRENT_TIMESTAMP
 );
 
+-- 8. BẢNG NHẬT KÝ WEBHOOK (DEBUG)
+CREATE TABLE IF NOT EXISTS webhook_logs (
+    log_id         SERIAL PRIMARY KEY,
+    received_at    TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+    ip_address     VARCHAR(50),
+    headers        JSONB,
+    payload        JSONB,
+    is_authenticated BOOLEAN    DEFAULT FALSE,
+    auth_step      VARCHAR(100),
+    payment_ref    VARCHAR(100),
+    matched        BOOLEAN    DEFAULT FALSE,
+    error_message  TEXT,
+    status_code    INT
+);
+
+
 
 """
 
