@@ -18,16 +18,101 @@ body{
   background:var(--bg);color:var(--fg);
   min-height:100vh;overflow-x:hidden;
 }
-body::before{
-  content:'';position:fixed;inset:0;
-  background-image:radial-gradient(circle,rgba(255,230,0,.8) 1px,transparent 1px);
-  background-size:30px 30px;opacity:.05;pointer-events:none;z-index:0;
+/* ── STITCH'S COSMIC BACKGROUND ── */
+.stitch-space {
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(circle at 50% 50%, #101035 0%, #070719 70%, #03030d 100%);
+  overflow: hidden;
+  z-index: 0;
+  pointer-events: none;
 }
-body::after{
-  content:'';position:fixed;inset:0;
-  background-image:repeating-linear-gradient(135deg,transparent,transparent 18px,rgba(123,47,255,.04) 18px,rgba(123,47,255,.04) 36px);
-  pointer-events:none;z-index:0;
+.stitch-space::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: 
+    radial-gradient(at 0% 0%, rgba(0, 245, 212, 0.15) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(255, 58, 242, 0.15) 0px, transparent 50%),
+    radial-gradient(at 80% 20%, rgba(123, 47, 255, 0.12) 0px, transparent 50%);
+  opacity: 0.8;
 }
+
+.parallax-layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  will-change: transform;
+}
+
+.stars-layer {
+  position: absolute;
+  top: -50%; left: -50%; width: 200%; height: 200%;
+}
+
+.stars-slow {
+  background-image: 
+    radial-gradient(circle, #ffffff 1px, transparent 1px),
+    radial-gradient(circle, rgba(0, 245, 212, 0.6) 1.2px, transparent 1.2px),
+    radial-gradient(circle, rgba(255, 58, 242, 0.5) 1.2px, transparent 1.2px);
+  background-size: 140px 140px, 220px 220px, 290px 290px;
+  background-position: 0 0, 40px 80px, 130px 30px;
+  animation: flySpaceSlow 120s linear infinite;
+  opacity: 0.7;
+}
+
+.stars-fast {
+  background-image: 
+    radial-gradient(circle, #ffffff 1.8px, transparent 1.8px),
+    radial-gradient(circle, rgba(255, 230, 0, 0.8) 1.5px, transparent 1.5px);
+  background-size: 280px 280px, 380px 380px;
+  background-position: 80px 140px, 210px 280px;
+  animation: flySpaceFast 70s linear infinite;
+  opacity: 0.85;
+}
+
+/* Flying stars / Shooting stars */
+.shooting-stars {
+  position: absolute;
+  top: -10%; left: -10%;
+  width: 120%; height: 120%;
+  transform: rotate(-35deg);
+}
+
+.shooting-star {
+  position: absolute;
+  left: 0; top: 0;
+  height: 2px;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0), rgba(0, 245, 212, 1), rgba(255, 58, 242, 1));
+  border-radius: 999px;
+  filter: drop-shadow(0 0 6px rgba(0, 245, 212, 0.8));
+  animation: shoot 10s linear infinite;
+  opacity: 0;
+}
+
+.shooting-star:nth-child(1) { top: 10%; left: 10%; width: 70px; animation-delay: 0s; animation-duration: 5s; }
+.shooting-star:nth-child(2) { top: 25%; left: 50%; width: 100px; animation-delay: 2.2s; animation-duration: 7s; filter: drop-shadow(0 0 6px rgba(255, 58, 242, 0.8)); }
+.shooting-star:nth-child(3) { top: 55%; left: 20%; width: 90px; animation-delay: 4.5s; animation-duration: 6s; }
+.shooting-star:nth-child(4) { top: 70%; left: 60%; width: 120px; animation-delay: 6.8s; animation-duration: 8s; filter: drop-shadow(0 0 8px rgba(255, 230, 0, 0.8)); }
+
+@keyframes flySpaceSlow {
+  from { transform: translate(0, 0); }
+  to { transform: translate(-10%, -10%); }
+}
+
+@keyframes flySpaceFast {
+  from { transform: translate(0, 0); }
+  to { transform: translate(-15%, -15%); }
+}
+
+@keyframes shoot {
+  0% { transform: translateX(0) scale(0); opacity: 0; }
+  8% { opacity: 1; transform: translateX(150px) scale(1); }
+  18% { opacity: 0; transform: translateX(500px) scale(0.4); }
+  100% { opacity: 0; transform: translateX(500px) scale(0); }
+}
+
 
 /* ── NAV ── */
 .nav{
@@ -410,6 +495,22 @@ body::after{
 </style>
 </head>
 <body>
+
+<!-- Stitch's Cosmic Space Background -->
+<div class="stitch-space" aria-hidden="true">
+  <div class="parallax-layer parallax-slow">
+    <div class="stars-layer stars-slow"></div>
+  </div>
+  <div class="parallax-layer parallax-fast">
+    <div class="stars-layer stars-fast"></div>
+  </div>
+  <div class="shooting-stars">
+    <div class="shooting-star"></div>
+    <div class="shooting-star"></div>
+    <div class="shooting-star"></div>
+    <div class="shooting-star"></div>
+  </div>
+</div>
 
 <!-- Decos -->
 <div class="fdeco" aria-hidden="true">✦</div>
@@ -794,6 +895,15 @@ function showToast(type, msg) {
   updateQtyUI('turns');
   updateQtyUI('lifelines');
 })();
+
+// Stitch's Parallax scroll effect
+window.addEventListener('scroll', () => {
+  const scrolled = window.scrollY;
+  const slowLayer = document.querySelector('.parallax-slow');
+  const fastLayer = document.querySelector('.parallax-fast');
+  if (slowLayer) slowLayer.style.transform = `translate3d(0, ${scrolled * -0.06}px, 0)`;
+  if (fastLayer) fastLayer.style.transform = `translate3d(0, ${scrolled * -0.15}px, 0)`;
+});
 </script>
 </body>
 </html>
