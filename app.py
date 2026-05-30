@@ -1727,15 +1727,20 @@ def shop_webhook():
                         WHERE user_id = %s
                     """, (txn['quantity'], txn['user_id']))
 
-                # Đồng thời cập nhật thêm bảng users cũ để đảm bảo tương thích 100% với test_webhook.py
+                # Đồng thời cập nhật thêm bảng users cũ (nếu cột tồn tại)
+                # QUAN TRỌNG: Phải dùng SAVEPOINT! Nếu query thất bại (cột không tồn tại),
+                # PostgreSQL sẽ đánh dấu transaction "aborted" → conn.commit() sẽ ROLLBACK toàn bộ!
                 try:
+                    cur.execute("SAVEPOINT legacy_update")
                     if txn['item_type'] == 'game_turn':
                         cur.execute("UPDATE users SET plays_left = plays_left + %s WHERE user_id = %s", (txn['quantity'], txn['user_id']))
                     elif txn['item_type'] == 'bonus_lifeline':
                         cur.execute("UPDATE users SET extra_lifelines = extra_lifelines + %s WHERE user_id = %s", (txn['quantity'], txn['user_id']))
+                    cur.execute("RELEASE SAVEPOINT legacy_update")
                 except Exception as e:
-                    # Bỏ qua nếu cột không tồn tại
-                    pass
+                    # Rollback chỉ SAVEPOINT, không ảnh hưởng transaction chính
+                    cur.execute("ROLLBACK TO SAVEPOINT legacy_update")
+                    print(f"⚠️ [Legacy] Bỏ qua cập nhật bảng users cũ: {e}")
                 
                 conn.commit()
                 log_webhook_attempt(auth_info['is_authenticated'] or is_local, auth_info['step'] if not is_local else 'Local bypass', payment_ref, True, None, 200)
